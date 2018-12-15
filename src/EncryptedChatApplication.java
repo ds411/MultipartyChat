@@ -22,7 +22,8 @@ public class EncryptedChatApplication extends Application {
         primaryStage.show();*/
 
         try {
-            Server server = new Server(8000, 2);
+            Server server = new Server(8000, 1);
+            Client client = new Client("localhost", 8000);
         }
         catch (Exception e) {
             e.printStackTrace();

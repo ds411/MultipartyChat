@@ -10,12 +10,12 @@ public class Client {
     public Client(String ip, int port) throws Exception {
         //Load keystore from server certificate
         KeyStore keyStore = KeyStore.getInstance("JKS");
-        FileInputStream in = new FileInputStream("cert.jks");
+        FileInputStream in = new FileInputStream("cert.p12");
         keyStore.load(in, "projectCertificate".toCharArray());
         in.close();
 
         //Initialize key manager factory from keystore
-        TrustManagerFactory tmFactory = TrustManagerFactory.getInstance("X509");
+        TrustManagerFactory tmFactory = TrustManagerFactory.getInstance("SunX509");
         tmFactory.init(keyStore);
 
         //Initialize ssl context from key manager factory

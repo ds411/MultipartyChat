@@ -19,6 +19,8 @@ public class Server {
     ArrayList<ClientConnection> clientConnecctions;
 
     public Server(int port, int clientPoolSize) throws Exception {
+        messageQueue = new LinkedBlockingQueue<>();
+
         //Load keystore from server certificate
         KeyStore keyStore = KeyStore.getInstance("JKS");
         FileInputStream in = new FileInputStream("cert.p12");
@@ -46,10 +48,13 @@ public class Server {
             @Override
             public void run() {
                 while(running) {
+                    System.out.println(1);
                     try {
                         SSLSocket client = (SSLSocket) ssocket.accept();
+                        System.out.println("connected.");
                         ClientConnection clientConnection = new ClientConnection(client);
                         clientConnecctions.add(clientConnection);
+                        System.out.println(1);
                     }
                     catch(Exception e) {
                         e.printStackTrace();
@@ -64,7 +69,7 @@ public class Server {
         Thread processMessages = new Thread() {
             @Override
             public void run() {
-                messageQueue = new LinkedBlockingQueue<>();
+                System.out.println(2);
                 while(running) {
                     try {
                         Message received = messageQueue.take();
