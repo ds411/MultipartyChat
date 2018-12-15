@@ -21,12 +21,12 @@ public class Server {
     public Server(int port, int clientPoolSize) throws Exception {
         //Load keystore from server certificate
         KeyStore keyStore = KeyStore.getInstance("JKS");
-        FileInputStream in = new FileInputStream("cert.jks");
+        FileInputStream in = new FileInputStream("cert.p12");
         keyStore.load(in, "projectCertificate".toCharArray());
         in.close();
 
         //Initialize key manager factory from keystore
-        KeyManagerFactory kmFactory = KeyManagerFactory.getInstance("X509");
+        KeyManagerFactory kmFactory = KeyManagerFactory.getInstance("SunX509");
         kmFactory.init(keyStore, "projectCertificate".toCharArray());
 
         //Initialize ssl context from key manager factory
@@ -64,6 +64,7 @@ public class Server {
         Thread processMessages = new Thread() {
             @Override
             public void run() {
+                messageQueue = new LinkedBlockingQueue<>();
                 while(running) {
                     try {
                         Message received = messageQueue.take();
