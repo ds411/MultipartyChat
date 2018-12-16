@@ -2,6 +2,9 @@ import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
 public class Client {
 
@@ -10,8 +13,10 @@ public class Client {
     public Client(String ip, int port) throws Exception {
         //Load keystore from server certificate
         KeyStore keyStore = KeyStore.getInstance("JKS");
-        FileInputStream in = new FileInputStream("cert.p12");
-        keyStore.load(in, "projectCertificate".toCharArray());
+        FileInputStream in = new FileInputStream("cert.pem");
+        X509Certificate cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(in);
+        keyStore.load(null);
+        keyStore.setCertificateEntry("cert", cert);
         in.close();
 
         //Initialize key manager factory from keystore
