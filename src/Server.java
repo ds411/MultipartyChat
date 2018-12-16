@@ -59,8 +59,6 @@ public class Server {
                         SSLSocket client = (SSLSocket) ssocket.accept();
                         System.out.println("connected.");
                         ClientConnection clientConnection = new ClientConnection(client);
-                        clientConnecctions.put(clientConnection);
-                        connectionPool.execute(clientConnection);
                         System.out.println(1);
                     }
                     catch(Exception e) {
@@ -111,20 +109,9 @@ public class Server {
 
         @Override
         public void run() {
-            while(true) {
+            while(authenticated) {
                 try {
-                    Message m = (Message)in.readObject();
-                    if(!authenticated) {
-                        if(SERVER_PASSWORD.equals(m.getMessage())) {
-                            authenticated = true;
-                            hash = passwordHash(((Message) in.readObject()).getMessage());
-                        }
-                        else {
-                            disconnect();
-                        }
-                    }
-                    else
-                        messageQueue.put(m);
+                    messageQueue.put((Message)in.readObject());
                 }
                 catch(Exception e) {
                     e.printStackTrace();
@@ -136,17 +123,26 @@ public class Server {
             this.client = client;
             this.in = new ObjectInputStream(client.getInputStream());
             this.out = new ObjectOutputStream(client.getOutputStream());
+            Message m = (Message)in.readObject();
+            if(SERVER_PASSWORD.equals(m.getMessage())) {
+                authenticated = true;
+                clientConnecctions.put(this);
+                connectionPool.execute(this);
+                send(new Message("SERVER", "You have been authenticated.", LocalTime.now()));
+                hash = passwordHash(((Message) in.readObject()).getMessage());
+            }
+            else {
+                disconnect();
+            }
         }
 
-        public boolean send(Message message) {
+        public void send(Message message) {
             try {
                 out.writeObject(message);
-                return true;
             }
             catch(Exception e) {
                 e.printStackTrace();
             }
-            return false;
         }
 
         public String getHash() {
