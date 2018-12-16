@@ -24,4 +24,9 @@ public class Message implements Serializable {
     public LocalTime getTimestamp() {
         return timestamp;
     }
+
+    @Override
+    public String toString() {
+        return String.format("[%s] %s: %s", timestamp.toString(), screenName, message);
+    }
 }

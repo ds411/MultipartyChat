@@ -55,20 +55,20 @@ public class Client {
                         processMessage((Message)in.readObject());
                     }
                     catch(Exception e) {
-
+                        e.printStackTrace();
                     }
                 }
             }
         };
+        processMessages.setDaemon(true);
+        processMessages.start();
     }
 
     private void authenticate(String password) throws Exception {
         out.writeObject(new Message(screenName, password, LocalTime.now()));
         Message authenticationResponse = (Message)in.readObject();
-        if(authenticationResponse.getMessage().contains("disconnected")) {
+        if(authenticationResponse.getMessage().equals("Authentication failed.  Disconnecting.")) {
             socket.close();
-            in.close();
-            out.close();
         }
         else {
             authenticated = true;

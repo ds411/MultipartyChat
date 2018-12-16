@@ -1,4 +1,5 @@
 import javax.net.ssl.*;
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -113,6 +114,9 @@ public class Server {
                 try {
                     messageQueue.put((Message)in.readObject());
                 }
+                catch(EOFException eof) {
+                    disconnect();
+                }
                 catch(Exception e) {
                     e.printStackTrace();
                 }
@@ -128,10 +132,11 @@ public class Server {
                 authenticated = true;
                 clientConnecctions.put(this);
                 connectionPool.execute(this);
-                send(new Message("SERVER", "You have been authenticated.", LocalTime.now()));
+                send(new Message("SERVER", "Authentication successful.", LocalTime.now()));
                 hash = passwordHash(((Message) in.readObject()).getMessage());
             }
             else {
+                out.writeObject(new Message("SERVER", "Authentication failed.  Disconnecting.", LocalTime.now()));
                 disconnect();
             }
         }
@@ -151,9 +156,6 @@ public class Server {
 
         public void disconnect() {
             try {
-                out.writeObject(new Message("SERVER", "You have been disconnected.", LocalTime.now()));
-                in.close();
-                out.close();
                 client.close();
                 clientConnecctions.remove(this);
                 connectionPool.remove(this);
