@@ -6,7 +6,6 @@ import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
@@ -18,10 +17,10 @@ public class Server {
     boolean running = true;
     private final String SERVER_PASSWORD;
 
-    SSLServerSocket ssocket;
-    LinkedBlockingQueue<Message> messageQueue;
-    ArrayBlockingQueue<ClientConnection> clientConnecctions;
-    ThreadPoolExecutor connectionPool;
+    private SSLServerSocket ssocket;
+    private LinkedBlockingQueue<Message> messageQueue;
+    private ArrayBlockingQueue<ClientConnection> clientConnecctions;
+    private ThreadPoolExecutor connectionPool;
 
     public Server(int port, int clientPoolSize, String password) throws Exception {
         messageQueue = new LinkedBlockingQueue<>();
@@ -82,7 +81,7 @@ public class Server {
                     try {
                         Message received = messageQueue.take();
                         for(ClientConnection conn : clientConnecctions) {
-                            conn.send(new Message(received.getScreenName(), passwordHash(received.getHash()), received.getMessage(), LocalTime.now()));
+                            conn.send(new Message(received.getScreenName() + " (" + conn.getHash() + ")", received.getMessage(), LocalTime.now()));
                         }
                     }
                     catch(Exception e) {
@@ -108,6 +107,7 @@ public class Server {
         private ObjectInputStream in;
         private ObjectOutputStream out;
         private boolean authenticated = false;
+        private String hash;
 
         @Override
         public void run() {
@@ -117,14 +117,10 @@ public class Server {
                     if(!authenticated) {
                         if(SERVER_PASSWORD.equals(m.getMessage())) {
                             authenticated = true;
+                            hash = passwordHash(((Message) in.readObject()).getMessage());
                         }
                         else {
-                            out.writeObject(new Message("SERVER", "", "You have been disconnected.", LocalTime.now()));
-                            in.close();
-                            out.close();
-                            client.close();
-                            clientConnecctions.remove(this);
-                            connectionPool.remove(this);
+                            disconnect();
                         }
                     }
                     else
@@ -151,6 +147,24 @@ public class Server {
                 e.printStackTrace();
             }
             return false;
+        }
+
+        public String getHash() {
+            return hash;
+        }
+
+        public void disconnect() {
+            try {
+                out.writeObject(new Message("SERVER", "You have been disconnected.", LocalTime.now()));
+                in.close();
+                out.close();
+                client.close();
+                clientConnecctions.remove(this);
+                connectionPool.remove(this);
+            }
+            catch(Exception e) {
+                e.printStackTrace();
+            }
         }
 
     }
