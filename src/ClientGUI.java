@@ -26,7 +26,6 @@ public class ClientGUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String message = clientMessage.getText();
                 System.out.println(message);
-
             }
         });
         clientOnly.add(clientMessage);
