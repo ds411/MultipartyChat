@@ -14,7 +14,6 @@ public class MainMenuGUI extends JFrame {
         setLayout(new FlowLayout());
 
         serverBtn = new JButton("Connect As Server");
-
         serverBtn.setFocusPainted(false);
         serverBtn.addActionListener(new ActionListener() {
             @Override
