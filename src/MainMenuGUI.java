@@ -1,5 +1,3 @@
-import javafx.scene.layout.StackPane;
-import javafx.scene.text.Text;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -23,7 +21,7 @@ public class MainMenuGUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Server server = new Server(8000, 2);
+                    Server server = new Server(8000, 2, "");
                 }
                 catch (Exception a) {
                     a.printStackTrace();
