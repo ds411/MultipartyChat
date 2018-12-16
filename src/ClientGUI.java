@@ -24,7 +24,9 @@ public class ClientGUI extends JFrame {
         clientSendBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Send Message");
+                String message = clientMessage.getText();
+                System.out.println(message);
+
             }
         });
         clientOnly.add(clientMessage);

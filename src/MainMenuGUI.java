@@ -19,7 +19,7 @@ public class MainMenuGUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Server server = new Server(8000, 1);
+                    Server server = new Server(8000, 2);
                 }
                 catch (Exception a) {
                     a.printStackTrace();
@@ -47,6 +47,5 @@ public class MainMenuGUI extends JFrame {
 
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        //getChildren().add(new Text("Testing123"));
     }
 }
