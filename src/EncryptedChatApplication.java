@@ -19,7 +19,11 @@ public class EncryptedChatApplication extends Application {
             Platform.exit();
             System.exit(0);
         });
-        primaryStage.show();*/
+        primaryStage.show(); */
+
+        MainMenuGUI gui = new MainMenuGUI();
+        gui.setSize(800, 600);
+        gui.setVisible(true);
 
         try {
             Server server = new Server(8000, 1);

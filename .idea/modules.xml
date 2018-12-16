@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/NetSec_Final.iml" filepath="$PROJECT_DIR$/NetSec_Final.iml" />
+      <module fileurl="file://$PROJECT_DIR$/netsec_final.iml" filepath="$PROJECT_DIR$/netsec_final.iml" />
     </modules>
   </component>
 </project>
