@@ -1,9 +1,8 @@
-import javafx.scene.layout.StackPane;
 
-public class ServerGUI extends StackPane {
+public class ServerGUI {
 
     public ServerGUI() {
-        super();
+
     }
 
 }

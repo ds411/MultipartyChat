@@ -1,5 +1,3 @@
-import javafx.scene.layout.StackPane;
-import javafx.scene.text.Text;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
