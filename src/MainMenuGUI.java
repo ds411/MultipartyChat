@@ -18,7 +18,12 @@ public class MainMenuGUI extends JFrame {
         serverBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Sever Clicked");
+                try {
+                    Server server = new Server(8000, 1);
+                }
+                catch (Exception a) {
+                    a.printStackTrace();
+                }
             }
         });
 
@@ -28,7 +33,12 @@ public class MainMenuGUI extends JFrame {
         clientBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Client Clicked");
+                try {
+                    Client client = new Client("localhost", 8000);
+                }
+                catch (Exception a) {
+                    a.printStackTrace();
+                }
             }
         });
 

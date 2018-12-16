@@ -28,13 +28,6 @@ public class EncryptedChatApplication extends Application {
         guiC.setSize(800, 600);
         guiC.setVisible(true);
 
-        try {
-            Server server = new Server(8000, 1);
-            Client client = new Client("localhost", 8000);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
 
     }
 
