@@ -21,9 +21,9 @@ public class MainMenuGUI extends JFrame {
         serverBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent evt) {
-                JTextField portField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+                JTextField portField = new JTextField();
                 JTextField passwordField = new JTextField();
-                JTextField maxSize = new JFormattedTextField(NumberFormat.getIntegerInstance());
+                JTextField maxSize = new JTextField();
                 Object[] fields = {
                         "Server Port: ", portField,
                         "Server Password: ", passwordField,
@@ -33,7 +33,12 @@ public class MainMenuGUI extends JFrame {
                 int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION);
                 if(option == JOptionPane.OK_OPTION) {
                     try {
-                        ServerGUI serverGUI = new ServerGUI();
+                        Server server = new Server(
+                                Integer.parseInt(portField.getText()),
+                                Integer.parseInt(maxSize.getText()),
+                                passwordField.getText()
+                        );
+                        //ServerGUI serverGUI = new ServerGUI(server);
                     }
                     catch(Exception e) {
                         e.printStackTrace();
@@ -91,7 +96,7 @@ public class MainMenuGUI extends JFrame {
                 add(loginForm);
                 validate();*/
                 JTextField ipField = new JTextField();
-                JTextField portField = new JFormattedTextField(NumberFormat.getNumberInstance());
+                JTextField portField = new JTextField();
                 JTextField passwordField = new JTextField();
                 JTextField screenNameField = new JTextField();
                 JTextField hashField = new JTextField();
@@ -106,7 +111,14 @@ public class MainMenuGUI extends JFrame {
                 int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION);
                 if(option == JOptionPane.OK_OPTION) {
                     try {
-                        ClientGUI clientGUI = new ClientGUI();
+                        Client client = new Client(
+                                ipField.getText(),
+                                Integer.parseInt(portField.getText()),
+                                passwordField.getText(),
+                                screenNameField.getText(),
+                                hashField.getText()
+                        );
+                        ClientGUI clientGUI = new ClientGUI(client);
                     }
                     catch(Exception e) {
                         e.printStackTrace();

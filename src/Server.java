@@ -1,4 +1,7 @@
 import javax.net.ssl.*;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowEvent;
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -13,7 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class Server {
+public class Server extends JFrame {
 
     boolean running = true;
     private final String SERVER_PASSWORD;
@@ -24,6 +27,8 @@ public class Server {
     private ThreadPoolExecutor connectionPool;
 
     public Server(int port, int clientPoolSize, String password) throws Exception {
+        super("Chat Server");
+
         messageQueue = new LinkedBlockingQueue<>();
         SERVER_PASSWORD = password;
 
@@ -57,6 +62,7 @@ public class Server {
                 while(running) {
                     System.out.println(1);
                     try {
+                        System.out.println("Listening...");
                         SSLSocket client = (SSLSocket) ssocket.accept();
                         System.out.println("connected.");
                         ClientConnection clientConnection = new ClientConnection(client);
@@ -92,6 +98,59 @@ public class Server {
         processMessages.setDaemon(true);
         processMessages.start();
 
+
+
+        JPanel rootPane = new JPanel(new BorderLayout());
+
+        JPanel logPane = new JPanel(new BorderLayout());
+        JPanel connectionsPane = new JPanel(new BorderLayout());
+
+        JButton closeButton = new JButton("Close Server");
+        closeButton.addActionListener(evt -> {
+            close();
+            this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        });
+
+        JTextArea chatLog = new JTextArea();
+        chatLog.setEditable(false);
+        JScrollPane scrollingChatLog = new JScrollPane(chatLog);
+
+        logPane.add(closeButton, BorderLayout.NORTH);
+        logPane.add(scrollingChatLog, BorderLayout.CENTER);
+
+        JList connectionList = new JList(clientConnecctions.toArray());
+        JButton kickButton = new JButton("Kick");
+        kickButton.addActionListener(evt -> {
+            ((ClientConnection) connectionList.getSelectedValue()).disconnect();
+        });
+
+        connectionsPane.add(connectionList, BorderLayout.CENTER);
+        connectionsPane.add(kickButton, BorderLayout.SOUTH);
+
+        rootPane.add(logPane, BorderLayout.CENTER);
+        rootPane.add(connectionsPane, BorderLayout.EAST);
+
+        add(rootPane);
+        setSize(1000, 600);
+        setVisible(true);
+
+        chatLog.append("1");
+        chatLog.append("1");
+        chatLog.append("1");
+        chatLog.append("1");
+    }
+
+    public void close() {
+        try {
+            running = false;
+            for(ClientConnection conn : clientConnecctions) {
+                conn.disconnect();
+            }
+            ssocket.close();
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private String passwordHash(String password) throws Exception {

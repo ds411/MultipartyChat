@@ -9,9 +9,12 @@ public class ClientGUI extends JFrame {
     private JPanel allMessages, clientOnly;
     private JTextField clientMessage;
     private JButton clientSendBtn;
+    private Client client;
 
-    public ClientGUI() {
+    public ClientGUI(Client client) {
         super("Client Messenger");
+
+        this.client = client;
 
         clientOnly = new JPanel();
         allMessages = new JPanel();
@@ -33,6 +36,9 @@ public class ClientGUI extends JFrame {
 
         add(allMessages);
         add(clientOnly, BorderLayout.SOUTH);
+
+        setSize(1000,600);
+        setVisible(true);
 
     }
 
