@@ -1,10 +1,10 @@
 import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
@@ -123,6 +123,9 @@ public class Client extends JFrame {
     public void send(Message message) {
         try {
             out.writeObject(message);
+        }
+        catch(SocketException | EOFException se) {
+            dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         }
         catch(Exception e) {
             e.printStackTrace();
