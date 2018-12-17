@@ -218,7 +218,6 @@ public class Server extends JFrame {
          */
         kickButton.addActionListener(evt -> {
             ((ClientConnection) connectionList.getSelectedValue()).disconnect(); //disconnects the selected client
-            connectionList.setListData(clientConneections.toArray());   //update array
         });
 
         connectionsPane.add(connectionList, BorderLayout.CENTER);   //add the connection list
@@ -258,13 +257,19 @@ public class Server extends JFrame {
                 try {
                     //get the messaged the client sent
                     Message received = (Message) in.readObject();
-                    //process the message to a string with the time
-                    Message m = new Message(
-                            toString(),
-                            received.getMessage(),
-                            LocalTime.now()
-                    );
-                    messageQueue.put(m); //add the processed messaged to the queue
+                    //if client left, disconnect
+                    if(received.getMessage().equals("DC")) {
+                        disconnect();
+                    }
+                    else {
+                        //process the message to a string with the time
+                        Message m = new Message(
+                                toString(),
+                                received.getMessage(),
+                                LocalTime.now()
+                        );
+                        messageQueue.put(m); //add the processed messaged to the queue
+                    }
                 }
                 //catch socket exception or eof excetion and disconnect
                 catch(SocketException | EOFException eof) {
@@ -364,6 +369,8 @@ public class Server extends JFrame {
                 //remove the client from the connections and the pool
                 clientConneections.remove(this);
                 connectionPool.remove(this);
+                //update connection list
+                connectionList.setListData(clientConneections.toArray());
                 //broadcast that client has left
                 if(m != null) {
                     messageQueue.put(m);

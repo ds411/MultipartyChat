@@ -10,7 +10,6 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 public class Client extends JFrame {
@@ -22,6 +21,7 @@ public class Client extends JFrame {
     private String hash;
     private boolean authenticated = false;
 
+    private JFrame window = this;
     private JTextArea chatLog;
 
     public Client(String ip, int port, String password, String screenName, String hash) throws Exception {
@@ -72,8 +72,15 @@ public class Client extends JFrame {
                         try {
                             processMessage((Message) in.readObject());
                         } catch (SocketException | EOFException eof) {
-                            chatLog.append("Disconnected.  Press send or disconnect to close client.");
                             authenticated = false;
+                            chatLog.append("Disconnected.  Closing client...");
+                            try {
+                                sleep(2000);
+                                dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
+                            } catch(Exception e) {
+                                e.printStackTrace();
+                            }
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -135,6 +142,25 @@ public class Client extends JFrame {
         );
     }
 
+    private void disconnect() {
+        try {
+            send(new Message(
+                    screenName,
+                    "DC",
+                    LocalTime.now()
+            ));
+            socket.close();
+            dispatchEvent(new WindowEvent(
+                    this,
+                    WindowEvent.WINDOW_CLOSING
+            ));
+        }
+        catch(SocketException | EOFException eof) {}
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void createGUI() {
         JPanel clientOnly = new JPanel();
         //JPanel allMessages = new JPanel();
@@ -160,6 +186,12 @@ public class Client extends JFrame {
         clientOnly.add(clientMessage);
         clientOnly.add(clientSendBtn);
 
+        JButton disconnectButton = new JButton("Disconnect");
+        disconnectButton.addActionListener(evt -> {
+            disconnect();
+        });
+
+        add(disconnectButton, BorderLayout.NORTH);
         add(scrollingChatLog, BorderLayout.CENTER);
         add(clientOnly, BorderLayout.SOUTH);
 
