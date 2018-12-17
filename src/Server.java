@@ -348,18 +348,26 @@ public class Server extends JFrame {
          */
         public void disconnect() {
             try {
+                Message m = null; //broadcast message
+                //if user has not already been disconnected (to prevent kicking from broadcasting twice)
+                if(authenticated) {
+                    m = new Message(
+                            "SERVER",
+                            toString() + " has left the room.",
+                            LocalTime.now()
+                    );
+                }
+                //deauthenticate the client
+                authenticated = false;
                 //try to close the client
                 client.close();
                 //remove the client from the connections and the pool
                 clientConneections.remove(this);
                 connectionPool.remove(this);
                 //broadcast that client has left
-                Message m = new Message(
-                        "SERVER",
-                        toString() + "has left the room.",
-                        LocalTime.now()
-                );
-                messageQueue.put(m);
+                if(m != null) {
+                    messageQueue.put(m);
+                }
             }
             //catch an exception and print
             catch(Exception e) {
