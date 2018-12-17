@@ -10,6 +10,8 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public class Client extends JFrame {
 
@@ -79,6 +81,7 @@ public class Client extends JFrame {
 
             chatLog = new JTextArea();
             chatLog.setEditable(false);
+            chatLog.setLineWrap(true);
             JScrollPane scrollingChatLog = new JScrollPane(chatLog);
 
             setLayout(new BorderLayout());
@@ -136,7 +139,7 @@ public class Client extends JFrame {
         chatLog.append(
                 String.format(
                         "[%s] %s: %s\n",
-                        m.getTimestamp().toString(),
+                        m.getTimestamp().truncatedTo(ChronoUnit.SECONDS).toString(),
                         m.getScreenName(),
                         m.getMessage()
                         )

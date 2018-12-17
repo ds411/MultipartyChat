@@ -11,6 +11,8 @@ import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
@@ -64,15 +66,12 @@ public class Server extends JFrame {
             @Override
             public void run() {
                 while(running) {
-                    System.out.println(1);
                     try {
                         System.out.println("Listening...");
                         SSLSocket client = (SSLSocket) ssocket.accept();
-                        System.out.println("connected.");
                         if(clientConneections.size() < clientPoolSize) {
                             System.out.println("Connection accepted");
                             ClientConnection clientConnection = new ClientConnection(client);
-                            System.out.println(1);
                         }
                     }
                     catch(SocketException se) {
@@ -91,13 +90,12 @@ public class Server extends JFrame {
         Thread processMessages = new Thread() {
             @Override
             public void run() {
-                System.out.println(2);
                 while(running) {
                     try {
                         Message m = messageQueue.take();
                         chatLog.append(String.format(
                                 "[%s] %s: %s\n",
-                                m.getTimestamp().toString(),
+                                m.getTimestamp().truncatedTo(ChronoUnit.SECONDS).toString(),
                                 m.getScreenName(),
                                 m.getMessage()
                         ));
@@ -129,6 +127,7 @@ public class Server extends JFrame {
 
         chatLog = new JTextArea();
         chatLog.setEditable(false);
+        chatLog.setLineWrap(true);
         JScrollPane scrollingChatLog = new JScrollPane(chatLog);
         scrollingChatLog.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -221,7 +220,14 @@ public class Server extends JFrame {
                 out.writeObject(new Message("SERVER", "Authentication failed.  Disconnecting.", LocalTime.now()));
                 disconnect();
             }
-            chatLog.append(this.toString());
+            chatLog.append(
+                    String.format(
+                        "[%s] %s %s",
+                        LocalTime.now().truncatedTo(ChronoUnit.SECONDS).toString(),
+                        this.toString(),
+                        "has joined the room.\n"
+                    )
+            );
         }
 
         public void send(Message message) {
