@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.text.NumberFormat;
 import javax.swing.*;
 
 public class MainMenuGUI extends JFrame {
@@ -15,33 +16,53 @@ public class MainMenuGUI extends JFrame {
         setLayout(new FlowLayout());
         mainForm = new JPanel();
 
-        serverBtn = new JButton("Connect As Server");
+        serverBtn = new JButton("Launch Server");
         serverBtn.setFocusPainted(false);
         serverBtn.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent evt) {
+                JTextField portField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+                JTextField passwordField = new JTextField();
+                JTextField maxSize = new JFormattedTextField(NumberFormat.getIntegerInstance());
+                Object[] fields = {
+                        "Server Port: ", portField,
+                        "Server Password: ", passwordField,
+                        "Max Size: ", maxSize,
+                };
+
+                int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION);
+                if(option == JOptionPane.OK_OPTION) {
+                    try {
+                        ServerGUI serverGUI = new ServerGUI();
+                    }
+                    catch(Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                /*
+
                 try {
                     Server server = new Server(8000, 2, "");
                 }
                 catch (Exception a) {
                     a.printStackTrace();
-                }
+                }*/
             }
         });
 
 
-        clientBtn = new JButton("Connect As Client");
+        clientBtn = new JButton("Launch Client");
         clientBtn.setFocusPainted(false);
         clientBtn.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent evt) {
                 /*try {
                     Client client = new Client("localhost", 8000);
                 }
                 catch (Exception a) {
                     a.printStackTrace();
                 } */
-                loginForm = new JPanel(new GridLayout(5, 2));
+                /*loginForm = new JPanel(new GridLayout(5, 2));
 
                 portLabel = new JLabel("Port Number");
                 ipLabel = new JLabel("IP");
@@ -68,7 +89,29 @@ public class MainMenuGUI extends JFrame {
 
                 remove(mainForm);
                 add(loginForm);
-                validate();
+                validate();*/
+                JTextField ipField = new JTextField();
+                JTextField portField = new JFormattedTextField(NumberFormat.getNumberInstance());
+                JTextField passwordField = new JTextField();
+                JTextField screenNameField = new JTextField();
+                JTextField hashField = new JTextField();
+                Object[] fields = {
+                        "IP: ", ipField,
+                        "Port: ", portField,
+                        "Server Password: ", passwordField,
+                        "Screen Name: ", screenNameField,
+                        "Hash String: ", hashField
+                };
+
+                int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION);
+                if(option == JOptionPane.OK_OPTION) {
+                    try {
+                        ClientGUI clientGUI = new ClientGUI();
+                    }
+                    catch(Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
 
