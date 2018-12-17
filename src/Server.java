@@ -11,7 +11,6 @@ import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -259,26 +258,12 @@ public class Server extends JFrame {
                 try {
                     //get the messaged the client sent
                     Message received = (Message) in.readObject();
-                    LocalTime now = LocalTime.now(); //current time
-                    Message m; //processed message
-                    //if client is disconnecting
-                    if(received.getMessage().substring(0,2).equals("DC:")) {
-                        //disconnect the client and alert the room
-                        disconnect();
-                        m = new Message(
-                                "SERVER",
-                                toString() + "has left the room.",
-                                now
-                        );
-                    }
-                    else {
-                        //process the message to a string with the time
-                        m = new Message(
-                                toString(),
-                                received.getMessage(),
-                                now
-                        );
-                    }
+                    //process the message to a string with the time
+                    Message m = new Message(
+                            toString(),
+                            received.getMessage(),
+                            LocalTime.now()
+                    );
                     messageQueue.put(m); //add the processed messaged to the queue
                 }
                 //catch socket exception or eof excetion and disconnect
@@ -368,6 +353,13 @@ public class Server extends JFrame {
                 //remove the client from the connections and the pool
                 clientConneections.remove(this);
                 connectionPool.remove(this);
+                //broadcast that client has left
+                Message m = new Message(
+                        "SERVER",
+                        toString() + "has left the room.",
+                        LocalTime.now()
+                );
+                messageQueue.put(m);
             }
             //catch an exception and print
             catch(Exception e) {
