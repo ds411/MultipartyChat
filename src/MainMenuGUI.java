@@ -118,7 +118,7 @@ public class MainMenuGUI extends JFrame {
                                 screenNameField.getText(),
                                 hashField.getText()
                         );
-                        ClientGUI clientGUI = new ClientGUI(client);
+                        //ClientGUI clientGUI = new ClientGUI(client);
                     }
                     catch(Exception e) {
                         e.printStackTrace();

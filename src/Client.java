@@ -1,4 +1,8 @@
 import javax.net.ssl.*;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -9,7 +13,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.LocalTime;
 
-public class Client {
+public class Client extends JFrame {
 
     private SSLSocket socket;
     private ObjectOutputStream out;
@@ -18,7 +22,11 @@ public class Client {
     private String hash;
     private boolean authenticated = false;
 
+    private JTextArea chatLog;
+
     public Client(String ip, int port, String password, String screenName, String hash) throws Exception {
+        super("Chat Client");
+
         //Load keystore from server certificate
         KeyStore keyStore = KeyStore.getInstance("JKS");
         FileInputStream fileIn = new FileInputStream("cert.pem");
@@ -66,6 +74,31 @@ public class Client {
         };
         processMessages.setDaemon(true);
         processMessages.start();
+
+        JPanel clientOnly = new JPanel();
+        //JPanel allMessages = new JPanel();
+
+        chatLog = new JTextArea();
+        chatLog.setEditable(false);
+        JScrollPane scrollingChatLog = new JScrollPane(chatLog);
+
+        setLayout(new BorderLayout());
+        clientOnly.setLayout(new FlowLayout());
+
+        JTextField clientMessage = new JTextField(50);
+        JButton clientSendBtn = new JButton("Send Message");
+        clientSendBtn.addActionListener(evt -> {
+            send(new Message(screenName, clientMessage.getText(), LocalTime.now()));
+            clientMessage.setText("");
+        });
+        clientOnly.add(clientMessage);
+        clientOnly.add(clientSendBtn);
+
+        add(scrollingChatLog, BorderLayout.CENTER);
+        add(clientOnly, BorderLayout.SOUTH);
+
+        setSize(1000,600);
+        setVisible(true);
     }
 
     private void authenticate(String password) throws Exception {
@@ -93,6 +126,13 @@ public class Client {
     }
 
     public void processMessage(Message m) {
-
+        chatLog.append(
+                String.format(
+                        "[%s] %s: %s\n",
+                        m.getTimestamp().toString(),
+                        m.getScreenName(),
+                        m.getMessage()
+                        )
+        );
     }
 }

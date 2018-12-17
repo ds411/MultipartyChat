@@ -24,7 +24,7 @@ public class Server extends JFrame {
 
     private SSLServerSocket ssocket;
     private LinkedBlockingQueue<Message> messageQueue;
-    private ArrayBlockingQueue<ClientConnection> clientConnecctions;
+    private ArrayBlockingQueue<ClientConnection> clientConneections;
     private ThreadPoolExecutor connectionPool;
 
     private JTextArea chatLog;
@@ -56,7 +56,7 @@ public class Server extends JFrame {
         //Create ssl server socket from ssl server socket factory
         ssocket = (SSLServerSocket) ssocketFactory.createServerSocket(port);
 
-        clientConnecctions = new ArrayBlockingQueue<>(clientPoolSize);
+        clientConneections = new ArrayBlockingQueue<>(clientPoolSize);
         connectionPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(clientPoolSize);
 
         //While server is running, accept clients and run new threads
@@ -69,8 +69,10 @@ public class Server extends JFrame {
                         System.out.println("Listening...");
                         SSLSocket client = (SSLSocket) ssocket.accept();
                         System.out.println("connected.");
-                        ClientConnection clientConnection = new ClientConnection(client);
-                        System.out.println(1);
+                        if(clientConneections.size() < clientPoolSize) {
+                            ClientConnection clientConnection = new ClientConnection(client);
+                            System.out.println(1);
+                        }
                     }
                     catch(SocketException se) {
                         System.out.println("Server socket closed.");
@@ -91,9 +93,15 @@ public class Server extends JFrame {
                 System.out.println(2);
                 while(running) {
                     try {
-                        Message received = messageQueue.take();
-                        for(ClientConnection conn : clientConnecctions) {
-                            conn.send(new Message(received.getScreenName() + " (" + conn.getHash() + ")", received.getMessage(), LocalTime.now()));
+                        Message m = messageQueue.take();
+                        chatLog.append(String.format(
+                                "[%s] %s: %s\n",
+                                m.getTimestamp().toString(),
+                                m.getScreenName(),
+                                m.getMessage()
+                        ));
+                        for(ClientConnection conn : clientConneections) {
+                            conn.send(m);
                         }
                     }
                     catch(Exception e) {
@@ -121,15 +129,16 @@ public class Server extends JFrame {
         chatLog = new JTextArea();
         chatLog.setEditable(false);
         JScrollPane scrollingChatLog = new JScrollPane(chatLog);
+        scrollingChatLog.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         logPane.add(closeButton, BorderLayout.NORTH);
         logPane.add(scrollingChatLog, BorderLayout.CENTER);
 
-        connectionList = new JList(clientConnecctions.toArray());
+        connectionList = new JList(clientConneections.toArray());
         JButton kickButton = new JButton("Kick");
         kickButton.addActionListener(evt -> {
             ((ClientConnection) connectionList.getSelectedValue()).disconnect();
-            connectionList.setListData(clientConnecctions.toArray());
+            connectionList.setListData(clientConneections.toArray());
         });
 
         connectionsPane.add(connectionList, BorderLayout.CENTER);
@@ -146,7 +155,7 @@ public class Server extends JFrame {
     public void close() {
         try {
             running = false;
-            for(ClientConnection conn : clientConnecctions) {
+            for(ClientConnection conn : clientConneections) {
                 conn.disconnect();
             }
             ssocket.close();
@@ -175,7 +184,13 @@ public class Server extends JFrame {
         public void run() {
             while(authenticated && running) {
                 try {
-                    messageQueue.put((Message)in.readObject());
+                    Message received = (Message) in.readObject();
+                    Message processed = new Message(
+                            toString(),
+                            received.getMessage(),
+                            LocalTime.now()
+                    );
+                    messageQueue.put(processed);
                 }
                 catch(SocketException | EOFException eof) {
                     disconnect();
@@ -194,9 +209,9 @@ public class Server extends JFrame {
             String[] connectionParameters = m.getMessage().split("/#/");
             if(connectionParameters.length == 3 && SERVER_PASSWORD.equals(connectionParameters[0])) {
                 authenticated = true;
-                clientConnecctions.put(this);
+                clientConneections.put(this);
                 connectionPool.execute(this);
-                connectionList.setListData(clientConnecctions.toArray());
+                connectionList.setListData(clientConneections.toArray());
                 screenName = connectionParameters[1];
                 hash = passwordHash(connectionParameters[2]);
                 send(new Message("SERVER", "Authentication successful.", LocalTime.now()));
@@ -224,7 +239,7 @@ public class Server extends JFrame {
         public void disconnect() {
             try {
                 client.close();
-                clientConnecctions.remove(this);
+                clientConneections.remove(this);
                 connectionPool.remove(this);
             }
             catch(Exception e) {
