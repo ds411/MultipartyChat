@@ -363,7 +363,7 @@ public class Server extends JFrame {
                 //broadcast disconnect to room
                 Message m = new Message(
                         "SERVER",
-                        toString() + " has left the room.",
+                        toString() + " has left the room.\n",
                         LocalTime.now()
                 );
                 messageQueue.put(m);
