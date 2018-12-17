@@ -256,32 +256,20 @@ public class Server extends JFrame {
         public void run() {
             //if client is authenticated and server is running
             while(authenticated && running) {
+                LocalTime now = LocalTime.now(); //current time
                 try {
                     //get the messaged the client sent
                     Message received = (Message) in.readObject();
-                    LocalTime now = LocalTime.now(); //current time
                     Message m; //processed message
-                    //if client is disconnecting
-                    if(received.getMessage().substring(0,2).equals("DC:")) {
-                        //disconnect the client and alert the room
-                        disconnect();
-                        m = new Message(
-                                "SERVER",
-                                toString() + "has left the room.\n",
-                                now
-                        );
-                    }
-                    else {
-                        //process the message to a string with the time
-                        m = new Message(
-                                toString(),
-                                received.getMessage(),
-                                now
-                        );
-                    }
+                    //process the message to a string with the time
+                    m = new Message(
+                            toString(),
+                            received.getMessage(),
+                            now
+                    );
                     messageQueue.put(m); //add the processed messaged to the queue
                 }
-                //catch socket exception or eof excetion and disconnect
+                //catch socket exception or eof exception and disconnect
                 catch(SocketException | EOFException eof) {
                     disconnect();
                 }
@@ -322,15 +310,18 @@ public class Server extends JFrame {
                 out.writeObject(new Message("SERVER", "DC: Authentication failed.\n", LocalTime.now()));
                 disconnect();   //disconnect the connection
             }
-            //add the client connecting to the chat log
-            chatLog.append(
-                    String.format(
-                            "[%s] %s %s",
-                            LocalTime.now().truncatedTo(ChronoUnit.SECONDS).toString(),
-                            this.toString(),
-                            "has joined the room.\n"
-                    )
-            );
+            //if a connection has been established
+            if(screenName != null) {
+                //add the client connecting to the chat log
+                chatLog.append(
+                        String.format(
+                                "[%s] %s %s",
+                                LocalTime.now().truncatedTo(ChronoUnit.SECONDS).toString(),
+                                this.toString(),
+                                "has joined the room.\n"
+                        )
+                );
+            }
         }
 
         /**
@@ -368,6 +359,14 @@ public class Server extends JFrame {
                 //remove the client from the connections and the pool
                 clientConneections.remove(this);
                 connectionPool.remove(this);
+                authenticated = false;
+                //broadcast disconnect to room
+                Message m = new Message(
+                        "SERVER",
+                        toString() + " has left the room.\n",
+                        LocalTime.now()
+                );
+                messageQueue.put(m);
             }
             //catch an exception and print
             catch(Exception e) {

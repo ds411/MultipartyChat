@@ -71,7 +71,8 @@ public class Client extends JFrame {
                     while (authenticated) {
                         try {
                             processMessage((Message) in.readObject());
-                        } catch (EOFException eof) {
+                        } catch (SocketException | EOFException eof) {
+                            chatLog.append("Disconnected.  Press send or disconnect to close client.");
                             authenticated = false;
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -81,8 +82,9 @@ public class Client extends JFrame {
             };
             processMessages.setDaemon(true);
             processMessages.start();
-
-            createGUI();
+            if(authenticated) {
+                createGUI();
+            }
         }
     }
 
@@ -94,7 +96,7 @@ public class Client extends JFrame {
                     LocalTime.now())
             );
             Message authenticationResponse = (Message) in.readObject();
-            if (authenticationResponse.getMessage().substring(0,2).equals("DC:")) {
+            if (authenticationResponse.getMessage().substring(0,2).equals("DC")) {
                 socket.close();
             } else {
                 authenticated = true;
@@ -121,14 +123,6 @@ public class Client extends JFrame {
     }
 
     public void processMessage(Message m) {
-        if(m.getScreenName().equals("SERVER") && m.getMessage().substring(0,2).equals("DC:")) {
-            try {
-                socket.close();
-            }
-            catch(Exception e) {
-                e.printStackTrace();
-            }
-        }
         chatLog.append(
                 String.format(
                         "[%s] %s: %s\n",
