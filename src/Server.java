@@ -70,6 +70,7 @@ public class Server extends JFrame {
                         SSLSocket client = (SSLSocket) ssocket.accept();
                         System.out.println("connected.");
                         if(clientConneections.size() < clientPoolSize) {
+                            System.out.println("Connection accepted");
                             ClientConnection clientConnection = new ClientConnection(client);
                             System.out.println(1);
                         }

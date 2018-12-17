@@ -3,10 +3,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.EOFException;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
@@ -26,6 +24,9 @@ public class Client extends JFrame {
 
     public Client(String ip, int port, String password, String screenName, String hash) throws Exception {
         super("Chat Client");
+
+        this.hash = hash;
+        this.screenName = screenName;
 
         //Load keystore from server certificate
         KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -47,72 +48,75 @@ public class Client extends JFrame {
         SSLSocketFactory socketFactory = sslContext.getSocketFactory();
 
         //Create ssl socket from ssl socket factory
-        socket = (SSLSocket) socketFactory.createSocket(ip, port);
+        socket = (SSLSocket) socketFactory.createSocket();
+        socket.connect(new InetSocketAddress(ip, port), 5000);
 
-        out = new ObjectOutputStream(socket.getOutputStream());
-        in = new ObjectInputStream(socket.getInputStream());
-        this.hash = hash;
-        this.screenName = screenName;
+        if(socket.isConnected()) {
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
 
-        authenticate(password);
+            authenticate(password);
 
-        Thread processMessages = new Thread() {
-            @Override
-            public void run() {
-                while(authenticated) {
-                    try {
-                        processMessage((Message)in.readObject());
-                    }
-                    catch(EOFException eof) {
-                        authenticated = false;
-                    }
-                    catch(Exception e) {
-                        e.printStackTrace();
+            Thread processMessages = new Thread() {
+                @Override
+                public void run() {
+                    while (authenticated) {
+                        try {
+                            processMessage((Message) in.readObject());
+                        } catch (EOFException eof) {
+                            authenticated = false;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            }
-        };
-        processMessages.setDaemon(true);
-        processMessages.start();
+            };
+            processMessages.setDaemon(true);
+            processMessages.start();
 
-        JPanel clientOnly = new JPanel();
-        //JPanel allMessages = new JPanel();
+            JPanel clientOnly = new JPanel();
+            //JPanel allMessages = new JPanel();
 
-        chatLog = new JTextArea();
-        chatLog.setEditable(false);
-        JScrollPane scrollingChatLog = new JScrollPane(chatLog);
+            chatLog = new JTextArea();
+            chatLog.setEditable(false);
+            JScrollPane scrollingChatLog = new JScrollPane(chatLog);
 
-        setLayout(new BorderLayout());
-        clientOnly.setLayout(new FlowLayout());
+            setLayout(new BorderLayout());
+            clientOnly.setLayout(new FlowLayout());
 
-        JTextField clientMessage = new JTextField(50);
-        JButton clientSendBtn = new JButton("Send Message");
-        clientSendBtn.addActionListener(evt -> {
-            send(new Message(screenName, clientMessage.getText(), LocalTime.now()));
-            clientMessage.setText("");
-        });
-        clientOnly.add(clientMessage);
-        clientOnly.add(clientSendBtn);
+            JTextField clientMessage = new JTextField(50);
+            JButton clientSendBtn = new JButton("Send Message");
+            clientSendBtn.addActionListener(evt -> {
+                send(new Message(screenName, clientMessage.getText(), LocalTime.now()));
+                clientMessage.setText("");
+            });
+            clientOnly.add(clientMessage);
+            clientOnly.add(clientSendBtn);
 
-        add(scrollingChatLog, BorderLayout.CENTER);
-        add(clientOnly, BorderLayout.SOUTH);
+            add(scrollingChatLog, BorderLayout.CENTER);
+            add(clientOnly, BorderLayout.SOUTH);
 
-        setSize(1000,600);
-        setVisible(true);
+            setSize(1000, 600);
+            setVisible(true);
+        }
     }
 
-    private void authenticate(String password) throws Exception {
-        out.writeObject(new Message(
-                screenName,
-                String.format("%s/#/%s/#/%s", password, screenName, hash),
-                LocalTime.now())
-        );
-        Message authenticationResponse = (Message)in.readObject();
-        if(authenticationResponse.getMessage().equals("Authentication failed.  Disconnecting.")) {
-            socket.close();
+    private void authenticate(String password) {
+        try {
+            out.writeObject(new Message(
+                    screenName,
+                    String.format("%s/#/%s/#/%s", password, screenName, hash),
+                    LocalTime.now())
+            );
+            Message authenticationResponse = (Message) in.readObject();
+            if (authenticationResponse.getMessage().equals("Authentication failed.  Disconnecting.")) {
+                socket.close();
+            } else {
+                authenticated = true;
+            }
         }
-        else {
-            authenticated = true;
+        catch(Exception e) {
+            e.printStackTrace();
         }
     }
 
