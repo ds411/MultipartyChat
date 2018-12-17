@@ -33,18 +33,24 @@ public class Client extends JFrame {
         //Load keystore from server certificate
         KeyStore keyStore = KeyStore.getInstance("JKS");
         FileInputStream fileIn = new FileInputStream("cert.pem");
-        X509Certificate cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(fileIn);
+        X509Certificate cert = (X509Certificate) CertificateFactory
+                .getInstance("X.509")
+                .generateCertificate(fileIn);
         keyStore.load(null);
         keyStore.setCertificateEntry("cert", cert);
         fileIn.close();
 
-        //Initialize key manager factory from keystore
+        //Initialize trust manager factory from keystore
         TrustManagerFactory tmFactory = TrustManagerFactory.getInstance("SunX509");
         tmFactory.init(keyStore);
 
-        //Initialize ssl context from key manager factory
+        //Initialize ssl context from trust manager factory
         SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-        sslContext.init(null, tmFactory.getTrustManagers(), new SecureRandom());
+        sslContext.init(
+                null,
+                tmFactory.getTrustManagers(),
+                new SecureRandom()
+        );
 
         //Get ssl socket factory from ssl context
         SSLSocketFactory socketFactory = sslContext.getSocketFactory();
@@ -88,7 +94,7 @@ public class Client extends JFrame {
                     LocalTime.now())
             );
             Message authenticationResponse = (Message) in.readObject();
-            if (authenticationResponse.getMessage().equals("Authentication failed.  Disconnecting.")) {
+            if (authenticationResponse.getMessage().substring(0,2).equals("DC:")) {
                 socket.close();
             } else {
                 authenticated = true;
@@ -104,7 +110,10 @@ public class Client extends JFrame {
             out.writeObject(message);
         }
         catch(SocketException | EOFException se) {
-            dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            dispatchEvent(new WindowEvent(
+                    this,
+                    WindowEvent.WINDOW_CLOSING
+            ));
         }
         catch(Exception e) {
             e.printStackTrace();
@@ -112,10 +121,20 @@ public class Client extends JFrame {
     }
 
     public void processMessage(Message m) {
+        if(m.getScreenName().equals("SERVER") && m.getMessage().substring(0,2).equals("DC:")) {
+            try {
+                socket.close();
+            }
+            catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
         chatLog.append(
                 String.format(
                         "[%s] %s: %s\n",
-                        m.getTimestamp().truncatedTo(ChronoUnit.SECONDS).toString(),
+                        m.getTimestamp()
+                                .truncatedTo(ChronoUnit.SECONDS)
+                                .toString(),
                         m.getScreenName(),
                         m.getMessage()
                         )
@@ -137,7 +156,11 @@ public class Client extends JFrame {
         JTextField clientMessage = new JTextField(50);
         JButton clientSendBtn = new JButton("Send Message");
         clientSendBtn.addActionListener(evt -> {
-            send(new Message(screenName, clientMessage.getText(), LocalTime.now()));
+            send(new Message(
+                    screenName,
+                    clientMessage.getText(),
+                    LocalTime.now()
+            ));
             clientMessage.setText("");
         });
         clientOnly.add(clientMessage);
