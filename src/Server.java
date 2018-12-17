@@ -6,6 +6,7 @@ import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.SocketException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -25,6 +26,9 @@ public class Server extends JFrame {
     private LinkedBlockingQueue<Message> messageQueue;
     private ArrayBlockingQueue<ClientConnection> clientConnecctions;
     private ThreadPoolExecutor connectionPool;
+
+    private JTextArea chatLog;
+    private JList connectionList;
 
     public Server(int port, int clientPoolSize, String password) throws Exception {
         super("Chat Server");
@@ -67,6 +71,9 @@ public class Server extends JFrame {
                         System.out.println("connected.");
                         ClientConnection clientConnection = new ClientConnection(client);
                         System.out.println(1);
+                    }
+                    catch(SocketException se) {
+                        System.out.println("Server socket closed.");
                     }
                     catch(Exception e) {
                         e.printStackTrace();
@@ -111,17 +118,18 @@ public class Server extends JFrame {
             this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         });
 
-        JTextArea chatLog = new JTextArea();
+        chatLog = new JTextArea();
         chatLog.setEditable(false);
         JScrollPane scrollingChatLog = new JScrollPane(chatLog);
 
         logPane.add(closeButton, BorderLayout.NORTH);
         logPane.add(scrollingChatLog, BorderLayout.CENTER);
 
-        JList connectionList = new JList(clientConnecctions.toArray());
+        connectionList = new JList(clientConnecctions.toArray());
         JButton kickButton = new JButton("Kick");
         kickButton.addActionListener(evt -> {
             ((ClientConnection) connectionList.getSelectedValue()).disconnect();
+            connectionList.setListData(clientConnecctions.toArray());
         });
 
         connectionsPane.add(connectionList, BorderLayout.CENTER);
@@ -133,11 +141,6 @@ public class Server extends JFrame {
         add(rootPane);
         setSize(1000, 600);
         setVisible(true);
-
-        chatLog.append("1");
-        chatLog.append("1");
-        chatLog.append("1");
-        chatLog.append("1");
     }
 
     public void close() {
@@ -165,15 +168,16 @@ public class Server extends JFrame {
         private ObjectInputStream in;
         private ObjectOutputStream out;
         private boolean authenticated = false;
+        private String screenName;
         private String hash;
 
         @Override
         public void run() {
-            while(authenticated) {
+            while(authenticated && running) {
                 try {
                     messageQueue.put((Message)in.readObject());
                 }
-                catch(EOFException eof) {
+                catch(SocketException | EOFException eof) {
                     disconnect();
                 }
                 catch(Exception e) {
@@ -187,17 +191,21 @@ public class Server extends JFrame {
             this.in = new ObjectInputStream(client.getInputStream());
             this.out = new ObjectOutputStream(client.getOutputStream());
             Message m = (Message)in.readObject();
-            if(SERVER_PASSWORD.equals(m.getMessage())) {
+            String[] connectionParameters = m.getMessage().split("/#/");
+            if(connectionParameters.length == 3 && SERVER_PASSWORD.equals(connectionParameters[0])) {
                 authenticated = true;
                 clientConnecctions.put(this);
                 connectionPool.execute(this);
+                connectionList.setListData(clientConnecctions.toArray());
+                screenName = connectionParameters[1];
+                hash = passwordHash(connectionParameters[2]);
                 send(new Message("SERVER", "Authentication successful.", LocalTime.now()));
-                hash = passwordHash(((Message) in.readObject()).getMessage());
             }
             else {
                 out.writeObject(new Message("SERVER", "Authentication failed.  Disconnecting.", LocalTime.now()));
                 disconnect();
             }
+            chatLog.append(this.toString());
         }
 
         public void send(Message message) {
@@ -222,6 +230,11 @@ public class Server extends JFrame {
             catch(Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s (%s)", screenName, hash);
         }
 
     }

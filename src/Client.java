@@ -1,4 +1,5 @@
 import javax.net.ssl.*;
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -54,6 +55,9 @@ public class Client {
                     try {
                         processMessage((Message)in.readObject());
                     }
+                    catch(EOFException eof) {
+                        authenticated = false;
+                    }
                     catch(Exception e) {
                         e.printStackTrace();
                     }
@@ -65,14 +69,17 @@ public class Client {
     }
 
     private void authenticate(String password) throws Exception {
-        out.writeObject(new Message(screenName, password, LocalTime.now()));
+        out.writeObject(new Message(
+                screenName,
+                String.format("%s/#/%s/#/%s", password, screenName, hash),
+                LocalTime.now())
+        );
         Message authenticationResponse = (Message)in.readObject();
         if(authenticationResponse.getMessage().equals("Authentication failed.  Disconnecting.")) {
             socket.close();
         }
         else {
             authenticated = true;
-            out.writeObject(new Message(screenName, hash, LocalTime.now()));
         }
     }
 

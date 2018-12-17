@@ -24,6 +24,15 @@ public class EncryptedChatApplication extends Application {
         MainMenuGUI gui = new MainMenuGUI();
         gui.setSize(800, 600);
         gui.setVisible(true);
+
+
+        try {
+            Thread.sleep(8000);
+            Client client = new Client("localhost", 8000, "2", "dan", "a");
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
         /*
         ClientGUI guiC = new ClientGUI();
         guiC.setSize(800, 600);
