@@ -76,31 +76,7 @@ public class Client extends JFrame {
             processMessages.setDaemon(true);
             processMessages.start();
 
-            JPanel clientOnly = new JPanel();
-            //JPanel allMessages = new JPanel();
-
-            chatLog = new JTextArea();
-            chatLog.setEditable(false);
-            chatLog.setLineWrap(true);
-            JScrollPane scrollingChatLog = new JScrollPane(chatLog);
-
-            setLayout(new BorderLayout());
-            clientOnly.setLayout(new FlowLayout());
-
-            JTextField clientMessage = new JTextField(50);
-            JButton clientSendBtn = new JButton("Send Message");
-            clientSendBtn.addActionListener(evt -> {
-                send(new Message(screenName, clientMessage.getText(), LocalTime.now()));
-                clientMessage.setText("");
-            });
-            clientOnly.add(clientMessage);
-            clientOnly.add(clientSendBtn);
-
-            add(scrollingChatLog, BorderLayout.CENTER);
-            add(clientOnly, BorderLayout.SOUTH);
-
-            setSize(1000, 600);
-            setVisible(true);
+            createGUI();
         }
     }
 
@@ -144,5 +120,33 @@ public class Client extends JFrame {
                         m.getMessage()
                         )
         );
+    }
+
+    private void createGUI() {
+        JPanel clientOnly = new JPanel();
+        //JPanel allMessages = new JPanel();
+
+        chatLog = new JTextArea();
+        chatLog.setEditable(false);
+        chatLog.setLineWrap(true);
+        JScrollPane scrollingChatLog = new JScrollPane(chatLog);
+
+        setLayout(new BorderLayout());
+        clientOnly.setLayout(new FlowLayout());
+
+        JTextField clientMessage = new JTextField(50);
+        JButton clientSendBtn = new JButton("Send Message");
+        clientSendBtn.addActionListener(evt -> {
+            send(new Message(screenName, clientMessage.getText(), LocalTime.now()));
+            clientMessage.setText("");
+        });
+        clientOnly.add(clientMessage);
+        clientOnly.add(clientSendBtn);
+
+        add(scrollingChatLog, BorderLayout.CENTER);
+        add(clientOnly, BorderLayout.SOUTH);
+
+        setSize(1000, 600);
+        setVisible(true);
     }
 }

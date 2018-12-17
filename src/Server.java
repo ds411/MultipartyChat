@@ -112,8 +112,29 @@ public class Server extends JFrame {
         processMessages.setDaemon(true);
         processMessages.start();
 
+        createGUI();
+    }
 
+    public void close() {
+        try {
+            running = false;
+            for(ClientConnection conn : clientConneections) {
+                conn.disconnect();
+            }
+            ssocket.close();
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    private String passwordHash(String password) throws Exception {
+        Base64.Encoder encoder = Base64.getEncoder();
+        MessageDigest hashFunction = MessageDigest.getInstance("SHA-256");
+        return encoder.encodeToString(hashFunction.digest(password.getBytes()));
+    }
+
+    private void createGUI() {
         JPanel rootPane = new JPanel(new BorderLayout());
 
         JPanel logPane = new JPanel(new BorderLayout());
@@ -150,25 +171,6 @@ public class Server extends JFrame {
         add(rootPane);
         setSize(1000, 600);
         setVisible(true);
-    }
-
-    public void close() {
-        try {
-            running = false;
-            for(ClientConnection conn : clientConneections) {
-                conn.disconnect();
-            }
-            ssocket.close();
-        }
-        catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String passwordHash(String password) throws Exception {
-        Base64.Encoder encoder = Base64.getEncoder();
-        MessageDigest hashFunction = MessageDigest.getInstance("SHA-256");
-        return encoder.encodeToString(hashFunction.digest(password.getBytes()));
     }
 
     private class ClientConnection implements Runnable {
