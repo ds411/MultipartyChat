@@ -57,6 +57,8 @@ public class Client extends JFrame {
 
         //Create ssl socket from ssl socket factory
         socket = (SSLSocket) socketFactory.createSocket();
+        //Force connections to require TLSv1.2 because sslContext allows downgrading
+        socket.setEnabledProtocols(new String[]{"TLSv1.2"});
         socket.connect(new InetSocketAddress(ip, port), 5000);
 
         if(socket.isConnected()) {
