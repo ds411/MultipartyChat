@@ -1,6 +1,4 @@
 import java.awt.*;
-import java.awt.event.*;
-import java.text.NumberFormat;
 import javax.swing.*;
 
 /**
@@ -16,10 +14,13 @@ public class MainMenuGUI extends JFrame {
     public MainMenuGUI() {
         super("Chat Application"); //set the title of the GUI
 
-        setLayout(new FlowLayout());    //set the layout of the GUI
         JPanel mainForm = new JPanel(); //create main panel
+        mainForm.setLayout(new BoxLayout(mainForm, BoxLayout.Y_AXIS));    //set the layout of the GUI);
 
         JButton serverBtn = new JButton("Launch Server");   //button for selecting server
+        serverBtn.setPreferredSize(new Dimension(400, 190));
+        JPanel serverBtnPane = new JPanel();
+        serverBtnPane.add(serverBtn);
         serverBtn.setFocusPainted(false);
         /**
          * Action listener for the serverBtn.
@@ -27,9 +28,9 @@ public class MainMenuGUI extends JFrame {
          * Allows connection as a server.
          */
         serverBtn.addActionListener(evt -> {
-            JTextField portField = new JTextField();    //create field for port num
+            JSpinner portField = new JSpinner(new SpinnerNumberModel(8000, 8000, 8099, 1));     //create field for port num
             JTextField passwordField = new JTextField();    //create field for password
-            JTextField maxSize = new JTextField();  //create field for size of room
+            JSpinner maxSize = new JSpinner(new SpinnerNumberModel(2, 2, 8, 1));  //create field for size of room
             //Load fields into object array
             Object[] fields = {
                     "Server Port: ", portField,
@@ -38,15 +39,16 @@ public class MainMenuGUI extends JFrame {
             };
 
             //set option to check if user connects or cancels
-            int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION);
+            int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             //if option selected is not cancel
             if(option == JOptionPane.OK_OPTION) {
                 //try to create a new server
                 try {
+                    System.out.println(portField.getValue());
                     //create server with the field inputs
                     Server server = new Server(
-                            Integer.parseInt(portField.getText()),
-                            Integer.parseInt(maxSize.getText()),
+                            (int)portField.getValue(),
+                            (int)maxSize.getValue(),
                             passwordField.getText()
                     );
                 }
@@ -59,6 +61,9 @@ public class MainMenuGUI extends JFrame {
 
 
         JButton clientBtn = new JButton("Launch Client"); //button for selecting client
+        clientBtn.setPreferredSize(new Dimension(400, 190));
+        JPanel clientBtnPane = new JPanel();
+        clientBtnPane.add(clientBtn);
         clientBtn.setFocusPainted(false);
         /**
          * Action listener for clientBtn.
@@ -67,21 +72,21 @@ public class MainMenuGUI extends JFrame {
          */
         clientBtn.addActionListener(evt -> {
             JTextField ipField = new JTextField();  //create field for IP
-            JTextField portField = new JTextField();    //create field for prot num
+            JSpinner portField = new JSpinner(new SpinnerNumberModel(8000, 8000, 8099, 1));   //create field for prot num
             JTextField passwordField = new JTextField();    //create field for password
             JTextField screenNameField = new JTextField();  //create field for screen name
-            JTextField hashField = new JTextField();    //create field for hash
+            JTextField keyField = new JTextField();    //create field for key
             //load fields into object array
             Object[] fields = {
                     "IP: ", ipField,
                     "Port: ", portField,
                     "Server Password: ", passwordField,
                     "Screen Name: ", screenNameField,
-                    "Hash String: ", hashField
+                    "HMAC Key: ", keyField
             };
 
             //set option to check if user connects or cancels
-            int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION);
+            int option = JOptionPane.showConfirmDialog(null, fields, "Connect to Server", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             //if option selected is not cancel
             if(option == JOptionPane.OK_OPTION) {
                 //try to create a new client
@@ -89,10 +94,10 @@ public class MainMenuGUI extends JFrame {
                     //create new client with the input fields
                     Client client = new Client(
                             ipField.getText(),
-                            Integer.parseInt(portField.getText()),
+                            (int)portField.getValue(),
                             passwordField.getText(),
                             screenNameField.getText(),
-                            hashField.getText()
+                            keyField.getText()
                     );
                 }
                 //catch an exception and print it
@@ -102,18 +107,29 @@ public class MainMenuGUI extends JFrame {
             }
         });
 
-        JButton calcButton = new JButton("Open HMAC Calculator");
-        calcButton.addActionListener(evt -> {
+        JButton calcBtn = new JButton("Open HMAC Calculator"); //button for hmac calculator
+        //setting size of button
+        calcBtn.setPreferredSize(new Dimension(400, 190));
+        JPanel calcBtnPane = new JPanel();
+        calcBtnPane.add(calcBtn);
+        /**
+         * Action listener for calcBtn.
+         * Launches the HMAC Calculator.
+         */
+        calcBtn.addActionListener(evt -> {
             HmacCalculator hmacCalculator = new HmacCalculator();
         });
 
-        mainForm.add(serverBtn);    //add the serverBtn to the JPanel
-        mainForm.add(clientBtn);    //add the clientBtn to the JPanel
-        mainForm.add(calcButton);
+        mainForm.add(serverBtnPane);    //add the serverBtn to the JPanel
+        mainForm.add(clientBtnPane);    //add the clientBtn to the JPanel
+        mainForm.add(calcBtnPane);      //add the calcBtn to the JPanel
 
         add(mainForm);  //add the mainForm panel to the MainMenu
 
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); //set the program to stop if you close
 
+        //set the size and allow it to be visible
+        setSize(400, 600);
+        setVisible(true);
     }
 }

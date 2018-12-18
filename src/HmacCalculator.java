@@ -22,12 +22,18 @@ public class HmacCalculator extends JFrame {
 
         JPanel root = new JPanel(); //panel for the gui
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));  //layout of the panel
+        JLabel messageLabel = new JLabel("Message:"); //label for message field
         JTextField messageField = new JTextField(50);   //field for the message
+        JLabel keyLabel = new JLabel("Key:"); //label for key
         JTextField keyField = new JTextField(50);   //field for the key
+        JLabel resultLabel = new JLabel("Result:");
         JTextField resultField = new JTextField(50);    //result of the hash field
         resultField.setEditable(false); //dont allow the result to be edited
 
         JButton calcButton = new JButton("Calculate HMAC"); //button to calculate the hmac
+        calcButton.setPreferredSize(new Dimension(400, 60));
+        JPanel calcButtonPane = new JPanel();
+        calcButtonPane.add(calcButton);
         /**
          * Action listener for the calculate btn.
          * If clicked, the message and key are taken to hash a message
@@ -58,9 +64,12 @@ public class HmacCalculator extends JFrame {
         });
 
         //add the fields and btns to the panel
+        root.add(messageLabel);
         root.add(messageField);
+        root.add(keyLabel);
         root.add(keyField);
-        root.add(calcButton);
+        root.add(calcButtonPane);
+        root.add(resultLabel);
         root.add(resultField);
 
         //add the panel to the gui frame

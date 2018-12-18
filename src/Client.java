@@ -1,5 +1,4 @@
 import javax.crypto.Mac;
-import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 import javax.swing.*;

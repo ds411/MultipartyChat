@@ -8,11 +8,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.SocketException;
 import java.security.KeyStore;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -84,20 +82,16 @@ public class Server extends JFrame {
                 while(running) {
                     try {
                         //show the server is listening
-                        System.out.println("Listening...");
                         //set the client to accept
                         SSLSocket client = (SSLSocket) ssocket.accept();
                         //if the pool is not full allow the connection
                         if(clientConneections.size() < clientPoolSize) {
                             //Create a new connection
-                            System.out.println("Connection accepted");
                             ClientConnection clientConnection = new ClientConnection(client);
                         }
                     }
-                    //catch socket exception and print
-                    catch(SocketException se) {
-                        System.out.println("Server socket closed.");
-                    }
+                    //ignore socket exception
+                    catch(SocketException se) {}
                     //catch exception and print
                     catch(Exception e) {
                         e.printStackTrace();
@@ -126,7 +120,7 @@ public class Server extends JFrame {
                         if(messageHmac == null) {
                             messageHmac = "";
                         } else {
-                            messageHmac = "(%s)";
+                            messageHmac = String.format("(%s)", messageHmac);
                         }
                         //append the messaged to the chat log wit the format
                         chatLog.append(String.format(
@@ -293,11 +287,10 @@ public class Server extends JFrame {
             //if the parameters meet the length and the server password is correct
             if(SERVER_PASSWORD.equals(m.getMessage())) {
                 authenticated = true;   //authenticate the user
+                screenName = m.getScreenName();   //get the client screen name
                 clientConneections.put(this);   //add the client to the connection queue
                 connectionPool.execute(this);   //execute the client to the client pool
                 connectionList.setListData(clientConneections.toArray());   //update the connection list
-                screenName = m.getScreenName();   //get the client screen name
-
                 //let the client and server log the client has been authenticated
                 send(new Message("SERVER", "Authentication successful.\n", null, LocalTime.now()));
             }
@@ -327,6 +320,8 @@ public class Server extends JFrame {
                 //try to output the message
                 out.writeObject(message);
             }
+            //ignore socket exceptions
+            catch(SocketException se) {}
             //catch an exception and print
             catch(Exception e) {
                 e.printStackTrace();
