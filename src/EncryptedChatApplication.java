@@ -1,8 +1,8 @@
 /**
- * Main class for the Chat Application
+ * Main class for the Chat Application.
  * This is an application that allows a client to connect to a server
- * and for them to send encrypted messages over the server
- * This opens a MainMenu and allows a user to select launch client or server
+ * and for them to send encrypted messages over the server.
+ * This opens a MainMenu and allows a user to connect as a client or server.
  * @author Dan, Mike, Mark
  */
 public class EncryptedChatApplication {

@@ -19,7 +19,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Server Class creates a server object and server GUI
+ * Server Class.
+ * This creates a server object and server GUI.
  */
 public class Server extends JFrame {
 
@@ -35,10 +36,10 @@ public class Server extends JFrame {
     private JList connectionList;   //list for the current connections
 
     /**
-     * Server Constructor to create the server
-     * @param port the port number of the server
-     * @param clientPoolSize the number of clients
-     * @param password the password of the server
+     * Server Constructor to create the server.
+     * @param port the port number of the server.
+     * @param clientPoolSize the number of clients for the server.
+     * @param password the password of the server.
      * @throws Exception
      */
     public Server(int port, int clientPoolSize, String password) throws Exception {
@@ -73,9 +74,8 @@ public class Server extends JFrame {
         //While server is running, accept clients and run new threads
         Thread acceptConnections = new Thread() {
             /**
-             * Override for run
-             * While running is still true
-             * Allow the clients to be accepted
+             * Override for run acceptConnections.
+             * While running is still true, allow the clients to be accepted
              */
             @Override
             public void run() {
@@ -110,9 +110,8 @@ public class Server extends JFrame {
         //While server is running, process every message added to the queue
         Thread processMessages = new Thread() {
             /**
-             * Override run
-             * While the server is still running
-             * Allow messages to be placed in the queue
+             * Override run for processMessages.
+             * While the server is still running, allow messages to be placed in the queue.
              */
             @Override
             public void run() {
@@ -147,9 +146,9 @@ public class Server extends JFrame {
     }
 
     /**
-     * Close method
-     * Allows the connection to the server to be stopped
-     * Closes the socket and sets running to false
+     * Close method.
+     * Allows the connection to the server to be stopped.
+     * Closes the socket, disconnects all clients and, sets running to false.
      */
     public void close() {
         //try to stop
@@ -168,8 +167,8 @@ public class Server extends JFrame {
     }
 
     /**
-     * passwordHash method
-     * Allows a passwrod to be hased in SHA-256
+     * passwordHash method.
+     * Allows a password to be hashed in SHA-256.
      * @param password takes in a plaintext string password
      * @return  the password as a hash
      * @throws Exception
@@ -181,9 +180,9 @@ public class Server extends JFrame {
     }
 
     /**
-     * CreateGUI method
-     * Creates the server GUI to display
-     * Keeps a log of messages and server controls
+     * CreateGUI method.
+     * Creates the server GUI to display.
+     * Keeps a log of messages and server controls.
      */
     private void createGUI() {
         JPanel rootPane = new JPanel(new BorderLayout());   //root panel for the GUI
@@ -193,8 +192,8 @@ public class Server extends JFrame {
 
         JButton closeButton = new JButton("Close Server");  //button to close the server
         /**
-         * closeBtn action listener
-         * Allows the server gui to be closed on the button click
+         * closeBtn action listener.
+         * Allows the server gui to be closed on the button click.
          */
         closeButton.addActionListener(evt -> {
             close();
@@ -213,8 +212,8 @@ public class Server extends JFrame {
         connectionList = new JList(clientConneections.toArray());   //create list of connectioins
         JButton kickButton = new JButton("Kick");   //button to kick users
         /**
-         * Action listener for kickBtn
-         * Allows server to kick connections
+         * Action listener for kickBtn.
+         * Allows server to kick clients that are connected.
          */
         kickButton.addActionListener(evt -> {
             ((ClientConnection) connectionList.getSelectedValue()).disconnect(); //disconnects the selected client
@@ -234,8 +233,8 @@ public class Server extends JFrame {
     }
 
     /**
-     * Client Connection class
-     * Allows client to connect to the server
+     * Client Connection class.
+     * Allows a client to connect to the server.
      */
     private class ClientConnection implements Runnable {
 
@@ -247,8 +246,8 @@ public class Server extends JFrame {
         private String hash;    //client connection hash
 
         /**
-         * Override for run
-         * Checks if the server is running and the client is authenticated
+         * Override for run in ClientConnection.
+         * Checks if the server is running and the client is authenticated.
          */
         @Override
         public void run() {
@@ -283,9 +282,9 @@ public class Server extends JFrame {
         }
 
         /**
-         * Client Connection constructor
-         * Allows clients to be authenticated and connection to server to be made
-         * @param client takes an ssl socket for the client to connect
+         * Client Connection constructor.
+         * Allows clients to be authenticated and connection to server to be made.
+         * @param client takes an ssl socket for the client to connect.
          * @throws Exception
          */
         public ClientConnection(SSLSocket client) throws Exception {
@@ -324,9 +323,9 @@ public class Server extends JFrame {
         }
 
         /**
-         * Send method
-         * Allows messages to be sent from the server
-         * @param message takes the message and outputs it to the log
+         * Send method.
+         * Allows messages to be sent over the server.
+         * @param message takes the message and outputs it to the log.
          */
         public void send(Message message) {
             try {
@@ -340,7 +339,8 @@ public class Server extends JFrame {
         }
 
         /**
-         * getHash method
+         * getHash method.
+         * This method returns the hash to check it against inputs.
          * @return hash for the password for authentication
          */
         public String getHash() {
@@ -348,8 +348,8 @@ public class Server extends JFrame {
         }
 
         /**
-         * disconnect method
-         * Allows the client to be removed from the server connection
+         * disconnect method.
+         * Allows the client to be removed from the server connection.
          */
         public void disconnect() {
             try {
@@ -383,9 +383,9 @@ public class Server extends JFrame {
         }
 
         /**
-         * Override for toString
-         *  Allows a messaged to be returned as a string
-         * @return a string in the correct format fo screen name and hash
+         * Override for toString.
+         *  Allows a messaged to be returned as a string.
+         * @return a string in the correct format fo screen name and hash.
          */
         @Override
         public String toString() {

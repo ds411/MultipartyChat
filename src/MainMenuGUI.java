@@ -4,14 +4,14 @@ import java.text.NumberFormat;
 import javax.swing.*;
 
 /**
- * MainMenuGUI class
- * Creates the GUI for the main menu
+ * MainMenuGUI class.
+ * This creates the GUI for the main menu.
  */
 public class MainMenuGUI extends JFrame {
 
     /**
-     * Constructor
-     * Creates the menu objects
+     * Constructor for MainMenuGUI.
+     * This creates the menu objects and sets the Title.
      */
     public MainMenuGUI() {
         super("Chat Application"); //set the title of the GUI
@@ -22,9 +22,9 @@ public class MainMenuGUI extends JFrame {
         JButton serverBtn = new JButton("Launch Server");   //button for selecting server
         serverBtn.setFocusPainted(false);
         /**
-         * Action listener for the serverBtn
-         * Creates the server input fields
-         * Allows connection as a server
+         * Action listener for the serverBtn.
+         * This creates the server input fields.
+         * Allows connection as a server.
          */
         serverBtn.addActionListener(evt -> {
             JTextField portField = new JTextField();    //create field for port num
@@ -61,9 +61,9 @@ public class MainMenuGUI extends JFrame {
         JButton clientBtn = new JButton("Launch Client"); //button for selecting client
         clientBtn.setFocusPainted(false);
         /**
-         * Action listener for clientBtn
-         * Creates the client input fields
-         * Allows connection as a client
+         * Action listener for clientBtn.
+         * Creates the client input fields.
+         * Allows connection as a client.
          */
         clientBtn.addActionListener(evt -> {
             JTextField ipField = new JTextField();  //create field for IP
