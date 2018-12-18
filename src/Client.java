@@ -264,6 +264,12 @@ public class Client extends JFrame {
         }
     }
 
+    /**
+     * hmac method.
+     * This method hashes the messages and adds it to a byte array.
+     * @param message to be hashes using the hmac.
+     * @return the encoded bytes of the message.
+     */
     private String hmac(String message) {
         byte[] macBytes = hmac.doFinal(message.getBytes());
         return encoder.encodeToString(macBytes);
