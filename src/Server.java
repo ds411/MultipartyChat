@@ -339,7 +339,7 @@ public class Server extends JFrame {
         }
 
         /**
-         * getHash method.
+         * Getter for hash.
          * This method returns the hash to check it against inputs.
          * @return hash for the password for authentication
          */
