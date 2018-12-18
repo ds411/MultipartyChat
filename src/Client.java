@@ -209,10 +209,14 @@ public class Client extends JFrame {
      * @param m is a message to be added to the chat log.
      */
     public void processMessage(Message m) {
+        //set the HMAC of the message
         String messageHmac = m.getHmac();
+        //if its null set it to be an empty string
         if(messageHmac == null) {
             messageHmac = "";
-        } else {
+        }
+        //else set the hmac to the one the message uses
+        else {
             messageHmac = String.format("(%s)", messageHmac);
         }
         //append the message in the correct format to the chat log text area

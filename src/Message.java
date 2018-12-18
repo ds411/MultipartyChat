@@ -17,6 +17,7 @@ public class Message implements Serializable {
      * This sets the screen name, message, and time of each message.
      * @param screenName is the screen name of the client sending a message.
      * @param message is the message that client is sending over the server.
+     * @param hmac is the HMAC to be used when sending the message
      * @param timestamp is the time of the message being sent.
      */
     public Message(String screenName, String message, String hmac, LocalTime timestamp) {
