@@ -67,6 +67,8 @@ public class Server extends JFrame {
 
         //Create ssl server socket from ssl server socket factory
         ssocket = (SSLServerSocket) ssocketFactory.createServerSocket(port);
+        //Force connections to require TLSv1.2 because sslContext allows downgrading
+        ssocket.setEnabledProtocols(new String[]{"TLSv1.2"});
 
         clientConneections = new ArrayBlockingQueue<>(clientPoolSize); //set the size of the connections
         connectionPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(clientPoolSize); //create threads for the size of the client pool
