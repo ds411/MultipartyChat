@@ -102,8 +102,14 @@ public class MainMenuGUI extends JFrame {
             }
         });
 
+        JButton calcButton = new JButton("Open HMAC Calculator");
+        calcButton.addActionListener(evt -> {
+            HmacCalculator hmacCalculator = new HmacCalculator();
+        });
+
         mainForm.add(serverBtn);    //add the serverBtn to the JPanel
         mainForm.add(clientBtn);    //add the clientBtn to the JPanel
+        mainForm.add(calcButton);
 
         add(mainForm);  //add the mainForm panel to the MainMenu
 

@@ -10,6 +10,7 @@ public class Message implements Serializable {
     private String screenName;  //screen name for the client
     private String message; //message that the client is sending
     private LocalTime timestamp;    //time stamp of when the message was sent
+    private String hmac; //hmac of the message
 
     /**
      * Message constructor.
@@ -18,9 +19,10 @@ public class Message implements Serializable {
      * @param message is the message that client is sending over the server.
      * @param timestamp is the time of the message being sent.
      */
-    public Message(String screenName, String message, LocalTime timestamp) {
+    public Message(String screenName, String message, String hmac, LocalTime timestamp) {
         this.screenName = screenName;
         this.message = message;
+        this.hmac = hmac;
         this.timestamp = timestamp;
     }
 
@@ -49,12 +51,10 @@ public class Message implements Serializable {
     }
 
     /**
-     * toString override.
-     * Constructs the proper format for each message based on the name, timestamp and message.
-     * @return the string of the message format.
+     * Getter for the hmac.
+     * @return the hmac the client is sending.
      */
-    @Override
-    public String toString() {
-        return String.format("[%s] %s: %s", timestamp.toString(), screenName, message);
+    public String getHmac() {
+        return hmac;
     }
 }

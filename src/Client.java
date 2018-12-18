@@ -1,3 +1,6 @@
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +14,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 
 /**
  * Client class.
@@ -22,8 +26,9 @@ public class Client extends JFrame {
     private ObjectOutputStream out; //client output
     private ObjectInputStream in;   //client input
     private String screenName;  //client screen name
-    private String hash;    //client hash
+    private Mac hmac;    //hmac algorithm
     private boolean authenticated = false;  //boolean to check if the client is authenticated
+    private Base64.Encoder encoder;
 
     private JFrame window = this;   //frame for the client GUI
     private JTextArea chatLog;  //textarea for the chat log of sent messages
@@ -35,13 +40,17 @@ public class Client extends JFrame {
      * @param port for the port of the server.
      * @param password for the password of the server.
      * @param screenName for the clients screen name
-     * @param hash for the hash to connect to authenticate to the server
+     * @param keyString for the hmac to authenticate to other clients
      * @throws Exception
      */
-    public Client(String ip, int port, String password, String screenName, String hash) throws Exception {
+    public Client(String ip, int port, String password, String screenName, String keyString) throws Exception {
         super("Chat Client");   //set the title of the client gui
 
-        this.hash = hash;   //set the client hash
+        SecretKeySpec keySpec = new SecretKeySpec(keyString.getBytes(), "HmacSHA256");
+        hmac = Mac.getInstance("HmacSHA256");
+        hmac.init(keySpec);
+        encoder = Base64.getEncoder();
+
         this.screenName = screenName;   //set the client screen name
 
         //Load keystore from server certificate
@@ -150,7 +159,8 @@ public class Client extends JFrame {
             //try to send to the server the clients inputs
             out.writeObject(new Message(
                     screenName,
-                    String.format("%s/#/%s/#/%s", password, screenName, hash),
+                    password,
+                    null,
                     LocalTime.now())
             );
             //set the message authentication response to the output
@@ -199,15 +209,22 @@ public class Client extends JFrame {
      * @param m is a message to be added to the chat log.
      */
     public void processMessage(Message m) {
+        String messageHmac = m.getHmac();
+        if(messageHmac == null) {
+            messageHmac = "";
+        } else {
+            messageHmac = String.format("(%s)", messageHmac);
+        }
         //append the message in the correct format to the chat log text area
         chatLog.append(
                 String.format(
-                        "[%s] %s: %s\n",
+                        "[%s] %s: %s %s\n",
                         m.getTimestamp()
                                 .truncatedTo(ChronoUnit.SECONDS)
                                 .toString(),
                         m.getScreenName(),
-                        m.getMessage()
+                        m.getMessage(),
+                        messageHmac
                         )
         );
     }
@@ -222,6 +239,7 @@ public class Client extends JFrame {
             send(new Message(
                     screenName,
                     "DC",
+                    null,
                     LocalTime.now()
             ));
             //close the socket
@@ -240,6 +258,11 @@ public class Client extends JFrame {
         catch(Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private String hmac(String message) {
+        byte[] macBytes = hmac.doFinal(message.getBytes());
+        return encoder.encodeToString(macBytes);
     }
 
     /**
@@ -265,10 +288,13 @@ public class Client extends JFrame {
          * with the screen name and timestamp to create a message.
          */
         clientSendBtn.addActionListener(evt -> {
+            //get message text from text field
+            String messageText = clientMessage.getText();
             //send a new message
             send(new Message(
                     screenName,
-                    clientMessage.getText(),
+                    messageText,
+                    hmac(messageText),
                     LocalTime.now()
             ));
             //reset the text field

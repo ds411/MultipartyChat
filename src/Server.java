@@ -121,12 +121,20 @@ public class Server extends JFrame {
                     try {
                         //create the message and add it to the queue
                         Message m = messageQueue.take();
+                        //get hmac from the message
+                        String messageHmac = m.getHmac();
+                        if(messageHmac == null) {
+                            messageHmac = "";
+                        } else {
+                            messageHmac = "(%s)";
+                        }
                         //append the messaged to the chat log wit the format
                         chatLog.append(String.format(
-                                "[%s] %s: %s\n",
+                                "[%s] %s: %s %s\n",
                                 m.getTimestamp().truncatedTo(ChronoUnit.SECONDS).toString(),
                                 m.getScreenName(),
-                                m.getMessage()
+                                m.getMessage(),
+                                messageHmac
                         ));
                         //for the client connections send the message
                         for(ClientConnection conn : clientConneections) {
@@ -166,19 +174,6 @@ public class Server extends JFrame {
         catch(Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * passwordHash method.
-     * Allows a password to be hashed in SHA-256.
-     * @param password takes in a plaintext string password
-     * @return  the password as a hash
-     * @throws Exception
-     */
-    private String passwordHash(String password) throws Exception {
-        Base64.Encoder encoder = Base64.getEncoder();   //create base64 encoder
-        MessageDigest hashFunction = MessageDigest.getInstance("SHA-256");  //set the hash function
-        return encoder.encodeToString(hashFunction.digest(password.getBytes()));    //return the hash
     }
 
     /**
@@ -245,7 +240,6 @@ public class Server extends JFrame {
         private ObjectOutputStream out; //object output
         private boolean authenticated = false;  //authentication of the user false
         private String screenName;  //client connection screen name
-        private String hash;    //client connection hash
 
         /**
          * Override for run in ClientConnection.
@@ -267,6 +261,7 @@ public class Server extends JFrame {
                         Message m = new Message(
                                 toString(),
                                 received.getMessage(),
+                                received.getHmac(),
                                 LocalTime.now()
                         );
                         messageQueue.put(m); //add the processed messaged to the queue
@@ -294,23 +289,21 @@ public class Server extends JFrame {
             this.in = new ObjectInputStream(client.getInputStream());   //set the client input
             this.out = new ObjectOutputStream(client.getOutputStream());    //set the client output
             Message m = (Message)in.readObject();   //get the message for connection parameters
-            String[] connectionParameters = m.getMessage().split("/#/");    //set the connection parameters
 
             //if the parameters meet the length and the server password is correct
-            if(connectionParameters.length == 3 && SERVER_PASSWORD.equals(connectionParameters[0])) {
+            if(SERVER_PASSWORD.equals(m.getMessage())) {
                 authenticated = true;   //authenticate the user
                 clientConneections.put(this);   //add the client to the connection queue
                 connectionPool.execute(this);   //execute the client to the client pool
                 connectionList.setListData(clientConneections.toArray());   //update the connection list
-                screenName = connectionParameters[1];   //get the client screen name
-                hash = passwordHash(connectionParameters[2]);   //get the hashed password from the client connection
+                screenName = m.getScreenName();   //get the client screen name
 
                 //let the client and server log the client has been authenticated
-                send(new Message("SERVER", "Authentication successful.\n", LocalTime.now()));
+                send(new Message("SERVER", "Authentication successful.\n", null, LocalTime.now()));
             }
             else {
                 //else let the client and server log the client has failed to authenticate
-                out.writeObject(new Message("SERVER", "DC: Authentication failed.\n", LocalTime.now()));
+                out.writeObject(new Message("SERVER", "DC: Authentication failed.\n", null, LocalTime.now()));
                 disconnect();   //disconnect the connection
             }
             //add the client connecting to the chat log
@@ -318,7 +311,7 @@ public class Server extends JFrame {
                     String.format(
                             "[%s] %s %s",
                             LocalTime.now().truncatedTo(ChronoUnit.SECONDS).toString(),
-                            this.toString(),
+                            toString(),
                             "has joined the room.\n"
                     )
             );
@@ -341,15 +334,6 @@ public class Server extends JFrame {
         }
 
         /**
-         * Getter for hash.
-         * This method returns the hash to check it against inputs.
-         * @return hash for the password for authentication
-         */
-        public String getHash() {
-            return hash;
-        }
-
-        /**
          * disconnect method.
          * Allows the client to be removed from the server connection.
          */
@@ -361,6 +345,7 @@ public class Server extends JFrame {
                     m = new Message(
                             "SERVER",
                             toString() + " has left the room.",
+                            null,
                             LocalTime.now()
                     );
                 }
@@ -387,11 +372,11 @@ public class Server extends JFrame {
         /**
          * Override for toString.
          *  Allows a messaged to be returned as a string.
-         * @return a string in the correct format fo screen name and hash.
+         * @return a string in the correct format fo screen name.
          */
         @Override
         public String toString() {
-            return String.format("%s (%s)", screenName, hash);
+            return screenName;
         }
 
     }
