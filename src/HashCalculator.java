@@ -1,57 +1,50 @@
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
 import java.awt.*;
+import java.security.MessageDigest;
 import java.util.Base64;
 
 /**
- * HMAC Calculate Class.
- * This Class creates an HMAC calculator to compute the HMAC
+ * Hash Calculate Class.
+ * This Class creates a hash calculator to compute the hash
  * based on a key of a string.
  */
-public class HmacCalculator extends JFrame {
+public class HashCalculator extends JFrame {
 
     /**
-     * HMAC caclulator constructor.
-     * This creates a GUI for calculating the HMAC of a string.
+     * Hash caclulator constructor.
+     * This creates a GUI for calculating the SHA256 hash of a string.
      */
-    public HmacCalculator() {
-        super("HMAC Calculator");   //set the title of the GUI
+    public HashCalculator() {
+        super("Hash Calculator");   //set the title of the GUI
 
         Base64.Encoder encoder = Base64.getEncoder();   //set the encoder to base 64
 
         JPanel root = new JPanel(); //panel for the gui
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));  //layout of the panel
-        JLabel messageLabel = new JLabel("Message:"); //label for message field
-        JTextField messageField = new JTextField(50);   //field for the message
-        JLabel keyLabel = new JLabel("Key:"); //label for key
-        JTextField keyField = new JTextField(50);   //field for the key
+        JLabel predigestLabel = new JLabel("Predigest:"); //label for key
+        JTextField predigestField = new JTextField(50);   //field for the key
         JLabel resultLabel = new JLabel("Result:");
         JTextField resultField = new JTextField(50);    //result of the hash field
         resultField.setEditable(false); //dont allow the result to be edited
 
-        JButton calcButton = new JButton("Calculate HMAC"); //button to calculate the hmac
+        JButton calcButton = new JButton("Calculate Hash"); //button to calculate the hmac
         calcButton.setPreferredSize(new Dimension(400, 60));
         JPanel calcButtonPane = new JPanel();
         calcButtonPane.add(calcButton);
         /**
          * Action listener for the calculate btn.
-         * If clicked, the message and key are taken to hash a message
-         * using HMAC SHA256 and returns the hash to the result
+         * If clicked, the predigest is used to hash a message
+         * using SHA256 and returns the hash to the result
          */
         calcButton.addActionListener(evt -> {
             try {
                 //try to get the message and key inputs
-                String message = messageField.getText();
-                String keyString = keyField.getText();
-                //set the key spec using the input key
-                SecretKeySpec keySpec = new SecretKeySpec(keyString.getBytes(), "HmacSHA256");
-                //set the hmac to hmac sha256
-                Mac hmac = Mac.getInstance("HmacSHA256");
-                hmac.init(keySpec); //initialize the hmac based on the key spec
+                String predigest = predigestField.getText();
+                //initialize the hashing function
+                MessageDigest hashFunction = MessageDigest.getInstance("SHA-256");
 
                 //get the bytes of the mac
-                byte[] macBytes = hmac.doFinal(message.getBytes());
+                byte[] macBytes = hashFunction.digest(predigest.getBytes());
 
                 //set the result to the hmac byes and set the result field to the result string
                 String result = encoder.encodeToString(macBytes);
@@ -64,10 +57,8 @@ public class HmacCalculator extends JFrame {
         });
 
         //add the fields and btns to the panel
-        root.add(messageLabel);
-        root.add(messageField);
-        root.add(keyLabel);
-        root.add(keyField);
+        root.add(predigestLabel);
+        root.add(predigestField);
         root.add(calcButtonPane);
         root.add(resultLabel);
         root.add(resultField);

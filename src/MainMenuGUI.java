@@ -44,7 +44,6 @@ public class MainMenuGUI extends JFrame {
             if(option == JOptionPane.OK_OPTION) {
                 //try to create a new server
                 try {
-                    System.out.println(portField.getValue());
                     //create server with the field inputs
                     Server server = new Server(
                             (int)portField.getValue(),
@@ -75,14 +74,14 @@ public class MainMenuGUI extends JFrame {
             JSpinner portField = new JSpinner(new SpinnerNumberModel(8000, 8000, 8099, 1));   //create field for prot num
             JTextField passwordField = new JTextField();    //create field for password
             JTextField screenNameField = new JTextField();  //create field for screen name
-            JTextField keyField = new JTextField();    //create field for key
+            JTextField predigestField = new JTextField();    //create field for predigest
             //load fields into object array
             Object[] fields = {
                     "IP: ", ipField,
                     "Port: ", portField,
                     "Server Password: ", passwordField,
                     "Screen Name: ", screenNameField,
-                    "HMAC Key: ", keyField
+                    "Predigest: ", predigestField
             };
 
             //set option to check if user connects or cancels
@@ -97,7 +96,7 @@ public class MainMenuGUI extends JFrame {
                             (int)portField.getValue(),
                             passwordField.getText(),
                             screenNameField.getText(),
-                            keyField.getText()
+                            predigestField.getText()
                     );
                 }
                 //catch an exception and print it
@@ -107,17 +106,17 @@ public class MainMenuGUI extends JFrame {
             }
         });
 
-        JButton calcBtn = new JButton("Open HMAC Calculator"); //button for hmac calculator
+        JButton calcBtn = new JButton("Open Hash Calculator"); //button for hmac calculator
         //setting size of button
         calcBtn.setPreferredSize(new Dimension(400, 190));
         JPanel calcBtnPane = new JPanel();
         calcBtnPane.add(calcBtn);
         /**
          * Action listener for calcBtn.
-         * Launches the HMAC Calculator.
+         * Launches the Hash Calculator.
          */
         calcBtn.addActionListener(evt -> {
-            HmacCalculator hmacCalculator = new HmacCalculator();
+            HashCalculator hmacCalculator = new HashCalculator();
         });
 
         mainForm.add(serverBtnPane);    //add the serverBtn to the JPanel

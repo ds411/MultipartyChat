@@ -8,9 +8,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.SocketException;
 import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -81,11 +83,11 @@ public class Server extends JFrame {
             public void run() {
                 while(running) {
                     try {
-                        //show the server is listening
-                        //set the client to accept
-                        SSLSocket client = (SSLSocket) ssocket.accept();
                         //if the pool is not full allow the connection
                         if(clientConneections.size() < clientPoolSize) {
+                            //show the server is listening
+                            //set the client to accept
+                            SSLSocket client = (SSLSocket) ssocket.accept();
                             //Create a new connection
                             ClientConnection clientConnection = new ClientConnection(client);
                         }
@@ -115,20 +117,12 @@ public class Server extends JFrame {
                     try {
                         //create the message and add it to the queue
                         Message m = messageQueue.take();
-                        //get hmac from the message
-                        String messageHmac = m.getHmac();
-                        if(messageHmac == null) {
-                            messageHmac = "";
-                        } else {
-                            messageHmac = String.format("(%s)", messageHmac);
-                        }
                         //append the messaged to the chat log wit the format
                         chatLog.append(String.format(
-                                "[%s] %s: %s %s\n",
+                                "[%s] %s: %s \n",
                                 m.getTimestamp().truncatedTo(ChronoUnit.SECONDS).toString(),
                                 m.getScreenName(),
-                                m.getMessage(),
-                                messageHmac
+                                m.getMessage()
                         ));
                         //for the client connections send the message
                         for(ClientConnection conn : clientConneections) {
@@ -229,11 +223,15 @@ public class Server extends JFrame {
      */
     private class ClientConnection implements Runnable {
 
+        private MessageDigest hashFunction;  //hash function
+        private Base64.Encoder encoder; //base64 encoder
+
         private SSLSocket client;   //ssl client object
         private ObjectInputStream in;   //object input
         private ObjectOutputStream out; //object output
         private boolean authenticated = false;  //authentication of the user false
         private String screenName;  //client connection screen name
+        private String hash; //client hashcode
 
         /**
          * Override for run in ClientConnection.
@@ -255,7 +253,6 @@ public class Server extends JFrame {
                         Message m = new Message(
                                 toString(),
                                 received.getMessage(),
-                                received.getHmac(),
                                 LocalTime.now()
                         );
                         messageQueue.put(m); //add the processed messaged to the queue
@@ -280,34 +277,38 @@ public class Server extends JFrame {
          */
         public ClientConnection(SSLSocket client) throws Exception {
             this.client = client;   //set the client
-            this.in = new ObjectInputStream(client.getInputStream());   //set the client input
-            this.out = new ObjectOutputStream(client.getOutputStream());    //set the client output
+            in = new ObjectInputStream(client.getInputStream());   //set the client input
+            out = new ObjectOutputStream(client.getOutputStream());    //set the client output
+            encoder = Base64.getEncoder();  //get base64 encoder
+            hashFunction = MessageDigest.getInstance("SHA-256");  //initialize digest function
             Message m = (Message)in.readObject();   //get the message for connection parameters
 
+            String[] params = m.getMessage().split("/#/");
             //if the parameters meet the length and the server password is correct
-            if(SERVER_PASSWORD.equals(m.getMessage())) {
+            if(params.length == 2 && SERVER_PASSWORD.equals(params[0])) {
                 authenticated = true;   //authenticate the user
                 screenName = m.getScreenName();   //get the client screen name
+                hash = hash(params[1]);     //get the client hash
                 clientConneections.put(this);   //add the client to the connection queue
                 connectionPool.execute(this);   //execute the client to the client pool
                 connectionList.setListData(clientConneections.toArray());   //update the connection list
                 //let the client and server log the client has been authenticated
-                send(new Message("SERVER", "Authentication successful.\n", null, LocalTime.now()));
+                send(new Message("SERVER", "Authentication successful.\n", LocalTime.now()));
+                //add the client connecting to the chat log
+                chatLog.append(
+                        String.format(
+                                "[%s] %s %s",
+                                LocalTime.now().truncatedTo(ChronoUnit.SECONDS).toString(),
+                                toString(),
+                                "has joined the room.\n"
+                        )
+                );
             }
             else {
                 //else let the client and server log the client has failed to authenticate
-                out.writeObject(new Message("SERVER", "DC: Authentication failed.\n", null, LocalTime.now()));
+                out.writeObject(new Message("SERVER", "DC: Authentication failed.\n", LocalTime.now()));
                 disconnect();   //disconnect the connection
             }
-            //add the client connecting to the chat log
-            chatLog.append(
-                    String.format(
-                            "[%s] %s %s",
-                            LocalTime.now().truncatedTo(ChronoUnit.SECONDS).toString(),
-                            toString(),
-                            "has joined the room.\n"
-                    )
-            );
         }
 
         /**
@@ -334,18 +335,6 @@ public class Server extends JFrame {
          */
         public void disconnect() {
             try {
-                Message m = null; //broadcast message
-                //if user has not already been disconnected (to prevent kicking from broadcasting twice)
-                if(authenticated) {
-                    m = new Message(
-                            "SERVER",
-                            toString() + " has left the room.",
-                            null,
-                            LocalTime.now()
-                    );
-                }
-                //deauthenticate the client
-                authenticated = false;
                 //try to close the client
                 client.close();
                 //remove the client from the connections and the pool
@@ -353,15 +342,33 @@ public class Server extends JFrame {
                 connectionPool.remove(this);
                 //update connection list
                 connectionList.setListData(clientConneections.toArray());
-                //broadcast that client has left
-                if(m != null) {
+                //if the client was authenticated
+                if(authenticated) {
+                    Message m = new Message(
+                            "SERVER",
+                            toString() + " has left the room.",
+                            LocalTime.now()
+                    );
+                    //broadcast that client has left
                     messageQueue.put(m);
                 }
+                //deauthenticate the client
+                authenticated = false;
+
             }
             //catch an exception and print
             catch(Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        /**
+         * hash method.
+         * Hashes a string to a base64-encoded string using SHA256.
+         */
+        private String hash(String predigest) {
+            byte[] hashBytes = hashFunction.digest(predigest.getBytes());
+            return encoder.encodeToString(hashBytes);
         }
 
         /**
@@ -371,7 +378,7 @@ public class Server extends JFrame {
          */
         @Override
         public String toString() {
-            return screenName;
+            return String.format("%s (%s)", screenName, hash);
         }
 
     }

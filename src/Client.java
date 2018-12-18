@@ -1,5 +1,3 @@
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +11,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 
 /**
  * Client class.
@@ -25,9 +22,7 @@ public class Client extends JFrame {
     private ObjectOutputStream out; //client output
     private ObjectInputStream in;   //client input
     private String screenName;  //client screen name
-    private Mac hmac;    //hmac algorithm
     private boolean authenticated = false;  //boolean to check if the client is authenticated
-    private Base64.Encoder encoder;
 
     private JFrame window = this;   //frame for the client GUI
     private JTextArea chatLog;  //textarea for the chat log of sent messages
@@ -39,16 +34,11 @@ public class Client extends JFrame {
      * @param port for the port of the server.
      * @param password for the password of the server.
      * @param screenName for the clients screen name
-     * @param keyString for the hmac to authenticate to other clients
+     * @param predigest for the hmac to authenticate to other clients
      * @throws Exception
      */
-    public Client(String ip, int port, String password, String screenName, String keyString) throws Exception {
+    public Client(String ip, int port, String password, String screenName, String predigest) throws Exception {
         super("Chat Client");   //set the title of the client gui
-
-        SecretKeySpec keySpec = new SecretKeySpec(keyString.getBytes(), "HmacSHA256");
-        hmac = Mac.getInstance("HmacSHA256");
-        hmac.init(keySpec);
-        encoder = Base64.getEncoder();
 
         this.screenName = screenName;   //set the client screen name
 
@@ -99,7 +89,7 @@ public class Client extends JFrame {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
-            authenticate(password); //authenticate the password entered
+            authenticate(password, predigest); //authenticate the password entered
 
             /**
              * Proccess messages thread override for run.
@@ -153,13 +143,12 @@ public class Client extends JFrame {
      * This method authenticates the client to the server based on the password.
      * @param password is the password the client inputs to be authenticated.
      */
-    private void authenticate(String password) {
+    private void authenticate(String password, String predigest) {
         try {
             //try to send to the server the clients inputs
             out.writeObject(new Message(
                     screenName,
-                    password,
-                    null,
+                    String.format("%s/#/%s", password, predigest),
                     LocalTime.now())
             );
             //set the message authentication response to the output
@@ -168,6 +157,8 @@ public class Client extends JFrame {
             if (authenticationResponse.getMessage().substring(0,2).equals("DC")) {
                 //close the socket
                 socket.close();
+                //alert user of incorrect password
+                JOptionPane.showMessageDialog(null, "Incorrect password.", "Incorrect Password", JOptionPane.WARNING_MESSAGE);
             } else {
                 //else the client can authenticate
                 authenticated = true;
@@ -208,26 +199,16 @@ public class Client extends JFrame {
      * @param m is a message to be added to the chat log.
      */
     public void processMessage(Message m) {
-        //set the HMAC of the message
-        String messageHmac = m.getHmac();
-        //if its null set it to be an empty string
-        if(messageHmac == null) {
-            messageHmac = "";
-        }
-        //else set the hmac to the one the message uses
-        else {
-            messageHmac = String.format("(%s)", messageHmac);
-        }
+
         //append the message in the correct format to the chat log text area
         chatLog.append(
                 String.format(
-                        "[%s] %s: %s %s\n",
+                        "[%s] %s: %s\n",
                         m.getTimestamp()
                                 .truncatedTo(ChronoUnit.SECONDS)
                                 .toString(),
                         m.getScreenName(),
-                        m.getMessage(),
-                        messageHmac
+                        m.getMessage()
                         )
         );
     }
@@ -237,12 +218,12 @@ public class Client extends JFrame {
      * Allows a client to disconnect from the server.
      */
     private void disconnect() {
+        System.out.println("DC");
         try {
             //try and send a message saying the client has disconnected
             send(new Message(
                     screenName,
                     "DC",
-                    null,
                     LocalTime.now()
             ));
             //close the socket
@@ -261,17 +242,6 @@ public class Client extends JFrame {
         catch(Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * hmac method.
-     * This method hashes the messages and adds it to a byte array.
-     * @param message to be hashes using the hmac.
-     * @return the encoded bytes of the message.
-     */
-    private String hmac(String message) {
-        byte[] macBytes = hmac.doFinal(message.getBytes());
-        return encoder.encodeToString(macBytes);
     }
 
     /**
@@ -303,7 +273,6 @@ public class Client extends JFrame {
             send(new Message(
                     screenName,
                     messageText,
-                    hmac(messageText),
                     LocalTime.now()
             ));
             //reset the text field
