@@ -62,7 +62,8 @@ public class Client extends JFrame {
         try {
             socket.connect(new InetSocketAddress(ip, port), 5000);
         } catch(SocketException e) {
-            System.out.println("Could not establish connection.");
+            socket.close();
+            JOptionPane.showMessageDialog(null, "Could not establish connection.", "Connection Failure", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
